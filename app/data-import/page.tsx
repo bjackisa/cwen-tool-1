@@ -32,7 +32,7 @@ interface SurveyRespondent {
   created_at: string
 }
 
-export default function DataImportPage() {
+export default function DataImportPage({ embedded = false }: { embedded?: boolean }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [respondents, setRespondents] = useState<SurveyRespondent[]>([])
@@ -157,30 +157,31 @@ export default function DataImportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Back to Dashboard
-              </Link>
-              <div className="ml-6">
-                <h1 className="text-2xl font-bold text-gray-900">Survey Data Overview</h1>
-                <p className="text-sm text-gray-600">
-                  {filteredRespondents.length} of {respondents.length} respondents
-                </p>
+    <div className={embedded ? "" : "min-h-screen bg-gray-50"}>
+      {!embedded && (
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center">
+                <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
+                  <ArrowLeft className="h-5 w-5 mr-2" />
+                  Back to Dashboard
+                </Link>
+                <div className="ml-6">
+                  <h1 className="text-2xl font-bold text-gray-900">Survey Data Overview</h1>
+                  <p className="text-sm text-gray-600">
+                    {filteredRespondents.length} of {respondents.length} respondents
+                  </p>
+                </div>
               </div>
+              <Button onClick={exportData} className="flex items-center">
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
             </div>
-            <Button onClick={exportData} className="flex items-center">
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Status Messages */}

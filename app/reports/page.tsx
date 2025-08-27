@@ -1,11 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Download, FileText, BarChart3, Users, MapPin } from "lucide-react"
 import Link from "next/link"
+import jsPDF from "jspdf"
+import html2canvas from "html2canvas"
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts"
 
 export default function ReportsPage() {
   const [reportType, setReportType] = useState<string>("")
@@ -13,6 +16,11 @@ export default function ReportsPage() {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([])
   const [includeCharts, setIncludeCharts] = useState(true)
   const [includeRawData, setIncludeRawData] = useState(false)
+  const reportRef = useRef<HTMLDivElement>(null)
+  const chartData = [
+    { name: "Male", value: 60 },
+    { name: "Female", value: 40 },
+  ]
 
   const reportTypes = [
     { value: "comprehensive", label: "Comprehensive Report", description: "Complete analysis of all survey data" },
@@ -40,24 +48,15 @@ export default function ReportsPage() {
       return
     }
 
-    const rows = [
-      ["Report Type", currentType],
-      ["Districts", selectedDistricts.length > 0 ? selectedDistricts.join(", ") : "All districts"],
-      ["Gender", selectedGenders.length > 0 ? selectedGenders.join(", ") : "All genders"],
-      ["Include Charts", includeCharts ? "Yes" : "No"],
-      ["Include Raw Data", includeRawData ? "Yes" : "No"],
-    ]
-
-    const csvContent = rows.map((r) => r.map((v) => `"${v}"`).join(",")).join("\n")
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.setAttribute("download", `${currentType}-report.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    if (reportRef.current) {
+      const canvas = await html2canvas(reportRef.current)
+      const imgData = canvas.toDataURL("image/png")
+      const pdf = new jsPDF("p", "mm", "a4")
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
+      pdf.save(`${currentType}-report.pdf`)
+    }
   }
 
   return (
@@ -211,39 +210,61 @@ export default function ReportsPage() {
 
           {/* Report Preview/Summary */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Report Summary</CardTitle>
-                <CardDescription>Preview of your report configuration</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-gray-900">Report Type</h4>
-                  <p className="text-sm text-gray-600">
-                    {reportTypes.find((t) => t.value === reportType)?.label || "Not selected"}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Districts</h4>
-                  <p className="text-sm text-gray-600">
-                    {selectedDistricts.length > 0 ? selectedDistricts.join(", ") : "All districts"}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Gender</h4>
-                  <p className="text-sm text-gray-600">
-                    {selectedGenders.length > 0 ? selectedGenders.join(", ") : "All genders"}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">Options</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    {includeCharts && <li>• Charts included</li>}
-                    {includeRawData && <li>• Raw data included</li>}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+            <div ref={reportRef} className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Report Summary</CardTitle>
+                  <CardDescription>Preview of your report configuration</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-gray-900">Report Type</h4>
+                    <p className="text-sm text-gray-600">
+                      {reportTypes.find((t) => t.value === reportType)?.label || "Not selected"}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">Districts</h4>
+                    <p className="text-sm text-gray-600">
+                      {selectedDistricts.length > 0 ? selectedDistricts.join(", ") : "All districts"}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">Gender</h4>
+                    <p className="text-sm text-gray-600">
+                      {selectedGenders.length > 0 ? selectedGenders.join(", ") : "All genders"}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">Options</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {includeCharts && <li>• Charts included</li>}
+                      {includeRawData && <li>• Raw data included</li>}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {includeCharts && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Selected Charts</CardTitle>
+                    <CardDescription>Visual representation</CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="#8884d8" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
             <Card>
               <CardHeader>
