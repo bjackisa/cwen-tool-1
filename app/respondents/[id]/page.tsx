@@ -112,7 +112,7 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
             <Button
               variant="ghost"
@@ -127,7 +127,7 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
         <Card>
           <CardHeader>
             <CardTitle>{respondent.respondent_name || "Unnamed Respondent"}</CardTitle>
