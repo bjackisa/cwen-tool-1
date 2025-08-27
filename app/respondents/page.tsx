@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Search, Download, Edit, Trash2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Search, Download, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -34,6 +35,7 @@ export default function RespondentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterDistrict, setFilterDistrict] = useState("")
+  const [page, setPage] = useState(1)
   const router = useRouter()
 
   useEffect(() => {
@@ -84,6 +86,7 @@ export default function RespondentsPage() {
     }
 
     setFilteredRespondents(filtered)
+    setPage(1)
   }
 
   const handleDelete = async (id: string) => {
@@ -144,12 +147,18 @@ export default function RespondentsPage() {
   }
 
   const uniqueDistricts = [...new Set(respondents.map((r) => r.district).filter(Boolean))]
+  const itemsPerPage = 15
+  const pageCount = Math.ceil(filteredRespondents.length / itemsPerPage)
+  const paginatedRespondents = filteredRespondents.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage,
+  )
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600">Loading respondents...</p>
         </div>
       </div>
@@ -157,39 +166,27 @@ export default function RespondentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Back to Dashboard
-              </Link>
-              <div className="ml-6">
-                <h1 className="text-2xl font-bold text-gray-900">Survey Respondents</h1>
-                <p className="text-sm text-gray-600">Manage and view all survey respondents</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button onClick={exportData} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-              <Link href="/data-import">
-                <Button size="sm">Add New</Button>
-              </Link>
-            </div>
-          </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Survey Respondents</h1>
+          <p className="text-sm text-muted-foreground">Manage and view all survey respondents</p>
         </div>
-      </header>
+        <div className="flex items-center gap-2">
+          <Button onClick={exportData} variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <Link href="/data-import">
+            <Button size="sm">Add New</Button>
+          </Link>
+        </div>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
+      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">{error}</div>}
 
-        {/* Filters */}
-        <Card className="mb-6">
+      {/* Filters */}
+      <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Filters & Search</CardTitle>
           </CardHeader>
@@ -207,28 +204,29 @@ export default function RespondentsPage() {
                 </div>
               </div>
               <div className="w-full md:w-48">
-                <select
-                  value={filterDistrict}
-                  onChange={(e) => setFilterDistrict(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Districts</option>
-                  {uniqueDistricts.map((district) => (
-                    <option key={district} value={district}>
-                      {district}
-                    </option>
-                  ))}
-                </select>
+                <Select value={filterDistrict} onValueChange={setFilterDistrict}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Districts" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Districts</SelectItem>
+                    {uniqueDistricts.map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="mt-4 text-sm text-gray-600">
-              Showing {filteredRespondents.length} of {respondents.length} respondents
+              Showing {paginatedRespondents.length} of {filteredRespondents.length} respondents
             </div>
           </CardContent>
-        </Card>
+      </Card>
 
-        {/* Respondents Table */}
-        <Card>
+      {/* Respondents Table */}
+      <Card>
           <CardHeader>
             <CardTitle>Respondents List</CardTitle>
             <CardDescription>All survey respondents and their basic information</CardDescription>
@@ -248,7 +246,7 @@ export default function RespondentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRespondents.map((respondent) => (
+                  {paginatedRespondents.map((respondent) => (
                     <TableRow key={respondent.id}>
                       <TableCell className="font-medium">{respondent.respondent_name || "N/A"}</TableCell>
                       <TableCell>
@@ -299,9 +297,31 @@ export default function RespondentsPage() {
                 {searchTerm || filterDistrict ? "No respondents match your filters." : "No respondents found."}
               </div>
             )}
+            {pageCount > 1 && (
+              <div className="flex justify-end items-center gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm">
+                  Page {page} of {pageCount}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === pageCount}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </CardContent>
-        </Card>
-      </main>
+      </Card>
     </div>
   )
 }
