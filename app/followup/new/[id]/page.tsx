@@ -7,9 +7,7 @@ import { useParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, User, Calendar, Save } from "lucide-react"
@@ -253,15 +251,24 @@ export default function NewFollowupPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="progress_since_last_visit">Overall Progress Description</Label>
-                <Textarea
-                  id="progress_since_last_visit"
+                <Label htmlFor="progress_since_last_visit">Overall Progress</Label>
+                <Select
                   value={formData.progress_since_last_visit}
-                  onChange={(e) => setFormData({ ...formData, progress_since_last_visit: e.target.value })}
-                  placeholder="Describe the overall progress since the last visit..."
-                  rows={4}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, progress_since_last_visit: value })
+                  }
                   required
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select progress" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="excellent">Excellent</SelectItem>
+                    <SelectItem value="good">Good</SelectItem>
+                    <SelectItem value="fair">Fair</SelectItem>
+                    <SelectItem value="poor">Poor</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -276,12 +283,22 @@ export default function NewFollowupPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="current_age">Current Age</Label>
-                  <Input
-                    id="current_age"
+                  <Select
                     value={formData.current_age}
-                    onChange={(e) => setFormData({ ...formData, current_age: e.target.value })}
-                    placeholder="Current age"
-                  />
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, current_age: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select age range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15-24">15-24</SelectItem>
+                      <SelectItem value="25-34">25-34</SelectItem>
+                      <SelectItem value="35-44">35-44</SelectItem>
+                      <SelectItem value="45+">45+</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="current_occupation">Current Occupation</Label>
@@ -303,12 +320,21 @@ export default function NewFollowupPage() {
                 </div>
                 <div>
                   <Label htmlFor="current_household_size">Current Household Size</Label>
-                  <Input
-                    id="current_household_size"
+                  <Select
                     value={formData.current_household_size}
-                    onChange={(e) => setFormData({ ...formData, current_household_size: e.target.value })}
-                    placeholder="Number of people"
-                  />
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, current_household_size: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1-3">1-3</SelectItem>
+                      <SelectItem value="4-6">4-6</SelectItem>
+                      <SelectItem value="7+">7+</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
@@ -358,13 +384,23 @@ export default function NewFollowupPage() {
 
               <div>
                 <Label htmlFor="new_economic_activities">New Economic Activities</Label>
-                <Textarea
-                  id="new_economic_activities"
+                <Select
                   value={formData.new_economic_activities}
-                  onChange={(e) => setFormData({ ...formData, new_economic_activities: e.target.value })}
-                  placeholder="Describe any new economic activities started..."
-                  rows={3}
-                />
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, new_economic_activities: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select activity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="crop farming">Crop farming</SelectItem>
+                    <SelectItem value="livestock">Livestock</SelectItem>
+                    <SelectItem value="trading">Trading</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -378,13 +414,22 @@ export default function NewFollowupPage() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="technology_adoption_progress">Technology Adoption Progress</Label>
-                <Textarea
-                  id="technology_adoption_progress"
+                <Select
                   value={formData.technology_adoption_progress}
-                  onChange={(e) => setFormData({ ...formData, technology_adoption_progress: e.target.value })}
-                  placeholder="Describe progress in technology adoption..."
-                  rows={3}
-                />
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, technology_adoption_progress: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select progress" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="advanced">Advanced</SelectItem>
+                    <SelectItem value="intermediate">Intermediate</SelectItem>
+                    <SelectItem value="basic">Basic</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -398,24 +443,43 @@ export default function NewFollowupPage() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="reasons_for_unachieved_goals">Reasons for Unachieved Goals</Label>
-                <Textarea
-                  id="reasons_for_unachieved_goals"
+                <Select
                   value={formData.reasons_for_unachieved_goals}
-                  onChange={(e) => setFormData({ ...formData, reasons_for_unachieved_goals: e.target.value })}
-                  placeholder="Explain why some goals were not achieved..."
-                  rows={3}
-                />
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, reasons_for_unachieved_goals: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lack of funds">Lack of funds</SelectItem>
+                    <SelectItem value="training needed">Training needed</SelectItem>
+                    <SelectItem value="market constraints">Market constraints</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <Label htmlFor="new_support_needed">New Support Needed</Label>
-                <Textarea
-                  id="new_support_needed"
+                <Select
                   value={formData.new_support_needed}
-                  onChange={(e) => setFormData({ ...formData, new_support_needed: e.target.value })}
-                  placeholder="What support is needed going forward..."
-                  rows={3}
-                />
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, new_support_needed: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select support" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="financial">Financial</SelectItem>
+                    <SelectItem value="training">Training</SelectItem>
+                    <SelectItem value="market access">Market access</SelectItem>
+                    <SelectItem value="technology">Technology</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -467,24 +531,43 @@ export default function NewFollowupPage() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="recommendations">Recommendations</Label>
-                <Textarea
-                  id="recommendations"
+                <Select
                   value={formData.recommendations}
-                  onChange={(e) => setFormData({ ...formData, recommendations: e.target.value })}
-                  placeholder="Provide recommendations for the respondent..."
-                  rows={4}
-                />
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, recommendations: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select recommendation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="continue current strategy">Continue current strategy</SelectItem>
+                    <SelectItem value="invest in training">Invest in training</SelectItem>
+                    <SelectItem value="seek financial support">Seek financial support</SelectItem>
+                    <SelectItem value="consider partnership">Consider partnership</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <Label htmlFor="additional_notes">Additional Notes</Label>
-                <Textarea
-                  id="additional_notes"
+                <Select
                   value={formData.additional_notes}
-                  onChange={(e) => setFormData({ ...formData, additional_notes: e.target.value })}
-                  placeholder="Any additional observations or notes..."
-                  rows={4}
-                />
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, additional_notes: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select note" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="needs follow up">Needs follow up</SelectItem>
+                    <SelectItem value="success story">Success story</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
