@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Search, Calendar, User, Eye } from "lucide-react"
 import Link from "next/link"
+import { Pagination } from "@/components/ui/pagination"
 
 interface FollowupSurvey {
   id: string
@@ -34,6 +35,7 @@ export default function FollowupHistoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     fetchFollowups()
@@ -78,6 +80,7 @@ export default function FollowupHistoryPage() {
     }
 
     setFilteredFollowups(filtered)
+    setPage(1)
   }
 
   if (isLoading) {
@@ -90,6 +93,13 @@ export default function FollowupHistoryPage() {
       </div>
     )
   }
+
+  const itemsPerPage = 15
+  const pageCount = Math.ceil(filteredFollowups.length / itemsPerPage)
+  const paginatedFollowups = filteredFollowups.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage,
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -130,7 +140,7 @@ export default function FollowupHistoryPage() {
               />
             </div>
             <div className="mt-4 text-sm text-gray-600">
-              Showing {filteredFollowups.length} of {followups.length} follow-up surveys
+              Showing {paginatedFollowups.length} of {filteredFollowups.length} follow-up surveys
             </div>
           </CardContent>
         </Card>
@@ -156,7 +166,7 @@ export default function FollowupHistoryPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredFollowups.map((followup) => (
+                  {paginatedFollowups.map((followup) => (
                     <TableRow key={followup.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
@@ -220,6 +230,9 @@ export default function FollowupHistoryPage() {
               <div className="text-center py-8 text-gray-500">
                 {searchTerm ? "No follow-up surveys match your search." : "No follow-up surveys found."}
               </div>
+            )}
+            {pageCount > 1 && (
+              <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
             )}
           </CardContent>
         </Card>

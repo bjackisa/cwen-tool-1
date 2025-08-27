@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Search, Download, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, Search, Download, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { Pagination } from "@/components/ui/pagination"
 
 interface Respondent {
   id: string
@@ -310,27 +311,7 @@ export default function RespondentsPage() {
               </div>
             )}
             {pageCount > 1 && (
-              <div className="flex justify-end items-center gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm">
-                  Page {page} of {pageCount}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === pageCount}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
             )}
           </CardContent>
         </Card>

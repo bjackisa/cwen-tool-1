@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
   Home,
@@ -23,6 +24,7 @@ const navItems = [
 
 export function Sidebar() {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
   return (
     <>
       <button
@@ -34,23 +36,31 @@ export function Sidebar() {
       </button>
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-gray-100 transform transition-transform md:translate-x-0 md:static md:inset-auto",
+          "fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-900 to-indigo-900 text-gray-100 shadow-lg transform transition-transform md:translate-x-0 md:static md:inset-auto",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="p-6 text-2xl font-bold">CWEN Tool</div>
-        <nav className="px-4 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-gray-800"
-              onClick={() => setOpen(false)}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </Link>
-          ))}
+        <div className="p-6 text-2xl font-bold tracking-tight">CWEN Tool</div>
+        <nav className="px-4 space-y-1 overflow-y-auto">
+          {navItems.map((item) => {
+            const active = pathname.startsWith(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-indigo-700 text-white"
+                    : "text-gray-200 hover:bg-indigo-800 hover:text-white",
+                )}
+                onClick={() => setOpen(false)}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </Link>
+            )
+          })}
         </nav>
       </aside>
       {open && (
