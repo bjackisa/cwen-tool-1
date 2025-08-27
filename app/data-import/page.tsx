@@ -377,7 +377,11 @@ export default function DataImportPage() {
                       <Button variant="outline" size="sm" onClick={() => router.push(`/followup/new/${respondent.id}`)}>
                         Start Follow-up
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => router.push(`/respondents?id=${respondent.id}`)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/respondents/${respondent.id}`)}
+                      >
                         View Details
                       </Button>
                     </div>

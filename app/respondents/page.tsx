@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Search, Download, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface Respondent {
   id: string
@@ -33,6 +34,7 @@ export default function RespondentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterDistrict, setFilterDistrict] = useState("")
+  const router = useRouter()
 
   useEffect(() => {
     fetchRespondents()
@@ -275,7 +277,11 @@ export default function RespondentsPage() {
                       <TableCell className="text-sm">{new Date(respondent.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => router.push(`/respondents/${respondent.id}`)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => handleDelete(respondent.id)}>
