@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Search, Download, Edit, Trash2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowLeft, Search, Download, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -34,6 +35,7 @@ export default function RespondentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterDistrict, setFilterDistrict] = useState("")
+  const [page, setPage] = useState(1)
   const router = useRouter()
 
   useEffect(() => {
@@ -84,6 +86,7 @@ export default function RespondentsPage() {
     }
 
     setFilteredRespondents(filtered)
+    setPage(1)
   }
 
   const handleDelete = async (id: string) => {
@@ -144,6 +147,12 @@ export default function RespondentsPage() {
   }
 
   const uniqueDistricts = [...new Set(respondents.map((r) => r.district).filter(Boolean))]
+  const itemsPerPage = 15
+  const pageCount = Math.ceil(filteredRespondents.length / itemsPerPage)
+  const paginatedRespondents = filteredRespondents.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage,
+  )
 
   if (isLoading) {
     return (
@@ -207,22 +216,23 @@ export default function RespondentsPage() {
                 </div>
               </div>
               <div className="w-full md:w-48">
-                <select
-                  value={filterDistrict}
-                  onChange={(e) => setFilterDistrict(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Districts</option>
-                  {uniqueDistricts.map((district) => (
-                    <option key={district} value={district}>
-                      {district}
-                    </option>
-                  ))}
-                </select>
+                <Select value={filterDistrict} onValueChange={setFilterDistrict}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Districts" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Districts</SelectItem>
+                    {uniqueDistricts.map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="mt-4 text-sm text-gray-600">
-              Showing {filteredRespondents.length} of {respondents.length} respondents
+              Showing {paginatedRespondents.length} of {filteredRespondents.length} respondents
             </div>
           </CardContent>
         </Card>
@@ -248,7 +258,7 @@ export default function RespondentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRespondents.map((respondent) => (
+                  {paginatedRespondents.map((respondent) => (
                     <TableRow key={respondent.id}>
                       <TableCell className="font-medium">{respondent.respondent_name || "N/A"}</TableCell>
                       <TableCell>
@@ -297,6 +307,29 @@ export default function RespondentsPage() {
             {filteredRespondents.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 {searchTerm || filterDistrict ? "No respondents match your filters." : "No respondents found."}
+              </div>
+            )}
+            {pageCount > 1 && (
+              <div className="flex justify-end items-center gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm">
+                  Page {page} of {pageCount}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === pageCount}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             )}
           </CardContent>
