@@ -22,7 +22,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="flex min-h-screen bg-gray-50">
             <Sidebar />
-            <main className="flex-1 md:ml-64 p-4 md:p-6 overflow-x-hidden">
+            <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
               {children}
             </main>
           </div>

@@ -139,7 +139,7 @@ export default function ComparisonDetailsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
             <Link href="/comparison" className="flex items-center text-gray-600 hover:text-gray-900">
               <ArrowLeft className="h-5 w-5 mr-2" />
@@ -153,7 +153,7 @@ export default function ComparisonDetailsPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Respondent Overview */}
         <Card className="mb-8">
           <CardHeader>
