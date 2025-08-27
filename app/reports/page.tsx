@@ -33,9 +33,31 @@ export default function ReportsPage() {
   const districts = ["Mpigi", "Masaka", "Butambala", "Mityana"]
   const genders = ["Male", "Female", "Other"]
 
-  const generateReport = async () => {
-    // In a real implementation, this would call an API to generate the report
-    alert(`Generating ${reportType} report with selected filters...`)
+  const generateReport = async (type?: string | React.MouseEvent<HTMLButtonElement>) => {
+    const currentType = typeof type === "string" ? type : reportType
+    if (!currentType) {
+      alert("Please select a report type first.")
+      return
+    }
+
+    const rows = [
+      ["Report Type", currentType],
+      ["Districts", selectedDistricts.length > 0 ? selectedDistricts.join(", ") : "All districts"],
+      ["Gender", selectedGenders.length > 0 ? selectedGenders.join(", ") : "All genders"],
+      ["Include Charts", includeCharts ? "Yes" : "No"],
+      ["Include Raw Data", includeRawData ? "Yes" : "No"],
+    ]
+
+    const csvContent = rows.map((r) => r.map((v) => `"${v}"`).join(",")).join("\n")
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.setAttribute("download", `${currentType}-report.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -229,15 +251,27 @@ export default function ReportsPage() {
                 <CardDescription>Generate common reports quickly</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start bg-transparent">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start bg-transparent"
+                  onClick={() => generateReport("analytics-summary")}
+                >
                   <BarChart3 className="h-4 w-4 mr-2" />
                   Analytics Summary
                 </Button>
-                <Button variant="outline" className="w-full justify-start bg-transparent">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start bg-transparent"
+                  onClick={() => generateReport("respondent-list")}
+                >
                   <Users className="h-4 w-4 mr-2" />
                   Respondent List
                 </Button>
-                <Button variant="outline" className="w-full justify-start bg-transparent">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start bg-transparent"
+                  onClick={() => generateReport("geographic-report")}
+                >
                   <MapPin className="h-4 w-4 mr-2" />
                   Geographic Report
                 </Button>
