@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Users, MapPin, ArrowLeft, Download, Filter } from "lucide-react"
+import { Search, Users, MapPin, ArrowLeft, Download, Filter, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -143,6 +143,20 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
     a.download = `survey_respondents_${new Date().toISOString().split("T")[0]}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this respondent?")) return
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from("survey_respondents").delete().eq("id", id)
+
+      if (error) throw error
+      await loadSurveyData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    }
   }
 
   if (isLoading) {
@@ -384,6 +398,9 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
                         onClick={() => router.push(`/respondents/${respondent.id}`)}
                       >
                         View Details
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleDelete(respondent.id)}>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
