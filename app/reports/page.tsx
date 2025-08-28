@@ -16,7 +16,7 @@ export default function ReportsPage() {
   const [selectedGenders, setSelectedGenders] = useState<string[]>([])
   const [includeCharts, setIncludeCharts] = useState(true)
   const [includeRawData, setIncludeRawData] = useState(false)
-  const reportRef = useRef<HTMLDivElement>(null)
+  const chartRef = useRef<HTMLDivElement>(null)
   const chartData = [
     { name: "Male", value: 60 },
     { name: "Female", value: 40 },
@@ -38,25 +38,65 @@ export default function ReportsPage() {
     { value: "geographic", label: "Geographic Analysis", description: "Location-based insights and patterns" },
   ]
 
+  const quickReportLabels: Record<string, string> = {
+    "analytics-summary": "Analytics Summary",
+    "respondent-list": "Respondent List",
+    "geographic-report": "Geographic Report",
+  }
+
   const districts = ["Mpigi", "Masaka", "Butambala", "Mityana"]
   const genders = ["Male", "Female", "Other"]
 
   const generateReport = async (type?: string | React.MouseEvent<HTMLButtonElement>) => {
     const currentType = typeof type === "string" ? type : reportType
+    if (typeof type === "string") setReportType(type)
     if (!currentType) {
       alert("Please select a report type first.")
       return
     }
 
-    if (reportRef.current) {
-      const canvas = await html2canvas(reportRef.current)
-      const imgData = canvas.toDataURL("image/png")
-      const pdf = new jsPDF("p", "mm", "a4")
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
-      pdf.save(`${currentType}-report.pdf`)
+    const pdf = new jsPDF()
+    const label =
+      reportTypes.find((t) => t.value === currentType)?.label ||
+      quickReportLabels[currentType] ||
+      "Custom Report"
+
+    pdf.setFontSize(18)
+    pdf.text(label, 10, 20)
+    pdf.setFontSize(12)
+    pdf.text(
+      `Districts: ${selectedDistricts.length > 0 ? selectedDistricts.join(", ") : "All districts"}`,
+      10,
+      35
+    )
+    pdf.text(
+      `Gender: ${selectedGenders.length > 0 ? selectedGenders.join(", ") : "All genders"}`,
+      10,
+      43
+    )
+
+    let y = 55
+    pdf.text("Options:", 10, y)
+    y += 8
+    if (includeCharts) {
+      pdf.text("• Charts included", 14, y)
+      y += 8
     }
+    if (includeRawData) {
+      pdf.text("• Raw data included", 14, y)
+      y += 8
+    }
+
+    if (includeCharts && chartRef.current) {
+      const canvas = await html2canvas(chartRef.current)
+      const imgData = canvas.toDataURL("image/png")
+      const imgProps = pdf.getImageProperties(imgData)
+      const pdfWidth = pdf.internal.pageSize.getWidth() - 20
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
+      pdf.addImage(imgData, "PNG", 10, y, pdfWidth, pdfHeight)
+    }
+
+    pdf.save(`${currentType}-report.pdf`)
   }
 
   return (
@@ -210,7 +250,7 @@ export default function ReportsPage() {
 
           {/* Report Preview/Summary */}
           <div className="space-y-6">
-            <div ref={reportRef} className="space-y-6">
+            <div className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Report Summary</CardTitle>
@@ -220,7 +260,9 @@ export default function ReportsPage() {
                   <div>
                     <h4 className="font-medium text-gray-900">Report Type</h4>
                     <p className="text-sm text-gray-600">
-                      {reportTypes.find((t) => t.value === reportType)?.label || "Not selected"}
+                      {reportTypes.find((t) => t.value === reportType)?.label ||
+                        quickReportLabels[reportType] ||
+                        "Not selected"}
                     </p>
                   </div>
                   <div>
@@ -251,16 +293,18 @@ export default function ReportsPage() {
                     <CardTitle>Selected Charts</CardTitle>
                     <CardDescription>Visual representation</CardDescription>
                   </CardHeader>
-                  <CardContent className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="value" fill="#8884d8" />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <CardContent>
+                    <div ref={chartRef} className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="value" fill="#8884d8" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </CardContent>
                 </Card>
               )}
