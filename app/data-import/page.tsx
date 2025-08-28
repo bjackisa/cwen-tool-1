@@ -11,7 +11,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 interface SurveyRespondent {
-  id: number
+  id: string
   timestamp: string
   district: string
   sub_county: string
@@ -145,7 +145,7 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
     window.URL.revokeObjectURL(url)
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this respondent?")) return
 
     try {
