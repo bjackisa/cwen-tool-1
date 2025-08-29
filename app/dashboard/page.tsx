@@ -28,6 +28,12 @@ export default function DashboardPage() {
     loadProfile()
   }, [router])
 
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/auth/login")
+  }
+
   return (
     <div className="flex flex-col">
       <header className="bg-white shadow-sm border-b">
@@ -39,9 +45,9 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-700">Welcome, {profile?.full_name || userEmail}</span>
-              <form action="/auth/signout" method="post">
-                <Button variant="outline" size="sm">Sign Out</Button>
-              </form>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                Sign Out
+              </Button>
             </div>
           </div>
         </div>
