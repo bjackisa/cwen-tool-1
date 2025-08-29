@@ -25,6 +25,7 @@ const navItems = [
 export function Sidebar() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  if (pathname.startsWith("/auth")) return null
   return (
     <>
       <button
