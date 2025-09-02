@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import DataImportPage from "../data-import/page"
 
 export default function DashboardPage() {
@@ -44,6 +45,9 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-600">Community Women's Enterprise Network</p>
             </div>
             <div className="flex items-center space-x-4">
+              <Link href="/respondents/new">
+                <Button variant="outline" size="sm">Add Respondent</Button>
+              </Link>
               <span className="text-sm text-gray-700">Welcome, {profile?.full_name || userEmail}</span>
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 Sign Out
