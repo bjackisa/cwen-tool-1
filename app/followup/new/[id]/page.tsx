@@ -1,591 +1,438 @@
 "use client"
 
-import type React from "react"
-
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, User, Calendar, Save } from "lucide-react"
-import Link from "next/link"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { ArrowLeft } from "lucide-react"
 
-interface OriginalRespondent {
-  id: string
-  respondent_name: string
-  district: string
-  sub_county: string
-  parish: string
-  age: string
-  gender: string
-  education_level: string
-  occupation: string
-  household_size: string
-  industry_involvement: string
-  value_chain_role: string
-  value_chain_stage: string
-  other_economic_activities: string
-  business_challenges: string[]
-  has_business_training: boolean
-  is_business_registered: boolean
-  has_financial_access: boolean
-  uses_technology: boolean
-  business_future_plans: string[]
-  support_needed: string
-  group_name: string
-  created_at: string
-}
+interface Respondent { id: string; respondent_name: string }
+
+const practiceOptions = [
+  "Recordkeeping",
+  "Costing/Unit economics",
+  "Product quality/standardization",
+  "Packaging/labeling",
+  "Basic marketing",
+  "Market linkage actions",
+  "Savings/VSLA discipline",
+  "None yet",
+  "Other",
+]
+
+const resultOptions = [
+  "Better product quality",
+  "Reduced costs",
+  "More consistent sales",
+  "Higher prices achieved",
+  "Fewer customer complaints",
+  "None yet",
+  "Other",
+]
+
+const passionOptions = [
+  "Coffee growing & value addition",
+  "Tea growing & value addition",
+  "Liquid soap",
+  "Weaving",
+  "Other",
+]
+
+const lackingOptions = [
+  "More training",
+  "Tools/equipment",
+  "Capital/finance",
+  "Market access",
+  "One-on-one mentorship",
+  "Quality certification/UNBS readiness",
+  "Recordkeeping/financial systems",
+  "Nothing",
+  "Other",
+]
+
+const challengeOptions = [
+  "Financial constraints",
+  "Disunity/poor teamwork",
+  "Non-cooperation",
+  "Weak leadership",
+  "Corruption among members",
+  "Limited/unstable markets",
+  "Poor product quality/consistency",
+  "Limited technical skills",
+  "Poor access to inputs/raw materials",
+  "Transport/logistics constraints",
+  "Climate/weather shocks",
+  "Household/time constraints (care duties)",
+  "Theft/security risk",
+  "Other",
+]
+
+const trainingOptions = [
+  "Bakery",
+  "Tailoring",
+  "Poultry",
+  "Cattle",
+  "Piggery",
+  "Goat rearing",
+  "Fish farming",
+  "Beekeeping",
+  "Mushroom",
+  "Horticulture/vegetables",
+  "Basic bookkeeping/finance",
+  "Branding/packaging",
+  "Digital marketing",
+  "Other",
+]
+
+const governanceOptions = [
+  "Active constitution",
+  "Elected leaders",
+  "Bank/VSLA account",
+  "Basic financial records",
+  "None",
+]
 
 export default function NewFollowupPage() {
   const params = useParams()
   const router = useRouter()
   const respondentId = params.id as string
 
-  const [originalData, setOriginalData] = useState<OriginalRespondent | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
+  const [respondent, setRespondent] = useState<Respondent | null>(null)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState({
-    progress_since_last_visit: "",
-    current_age: "",
-    current_occupation: "",
-    current_household_size: "",
-    current_industry_involvement: "",
-    current_value_chain_role: "",
-    current_value_chain_stage: "",
-    new_economic_activities: "",
-    business_growth_status: "",
-    revenue_change: "",
-    challenges_resolved: [] as string[],
-    new_challenges: [] as string[],
-    current_business_training: false,
-    current_business_registration: false,
-    current_financial_access: false,
-    new_buyers: [] as string[],
-    new_support_services: [] as string[],
-    technology_adoption_progress: "",
-    new_technologies_used: [] as string[],
-    remaining_technology_barriers: [] as string[],
-    previous_goals_achieved: [] as string[],
-    goals_not_achieved: [] as string[],
-    reasons_for_unachieved_goals: "",
-    updated_business_plans: [] as string[],
-    new_support_needed: "",
-    recommendations: "",
-    additional_notes: "",
-  })
+  const [attended, setAttended] = useState("1")
+  const [practices, setPractices] = useState<string[]>([])
+  const [practiceFreq, setPracticeFreq] = useState("")
+  const [results, setResults] = useState<string[]>([])
+  const [groupProgress, setGroupProgress] = useState("")
+  const [incomeChange, setIncomeChange] = useState("")
+  const [groupEarnings, setGroupEarnings] = useState("")
+  const [passions, setPassions] = useState<string[]>([])
+  const [lacking, setLacking] = useState<string[]>([])
+  const [gScores, setGScores] = useState({ g1: "", g2: "", g3: "", g4: "", g5: "", g6: "" })
+  const [g7, setG7] = useState("")
+  const [g8, setG8] = useState("")
+  const [challenges, setChallenges] = useState<string[]>([])
+  const [future, setFuture] = useState<string[]>([])
+  const [feedback, setFeedback] = useState("")
+  const [governance, setGovernance] = useState<string[]>([])
+  const [members, setMembers] = useState({ active: "", women: "", youth: "" })
+  const [newMarkets, setNewMarkets] = useState("")
+  const [qualitySteps, setQualitySteps] = useState("")
+  const [savingsGroup, setSavingsGroup] = useState("0")
 
   useEffect(() => {
-    fetchOriginalData()
+    const load = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("survey_respondents")
+        .select("id, respondent_name")
+        .eq("id", respondentId)
+        .single()
+      setRespondent(data as Respondent)
+    }
+    load()
   }, [respondentId])
 
-  const fetchOriginalData = async () => {
-    try {
-      const supabase = createClient()
-      const { data, error } = await supabase.from("survey_respondents").select("*").eq("id", respondentId).single()
-
-      if (error) throw error
-      setOriginalData(data)
-
-      // Pre-populate current data with original data
-      setFormData((prev) => ({
-        ...prev,
-        current_age: data.age || "",
-        current_occupation: data.occupation || "",
-        current_household_size: data.household_size || "",
-        current_industry_involvement: data.industry_involvement || "",
-        current_value_chain_role: data.value_chain_role || "",
-        current_value_chain_stage: data.value_chain_stage || "",
-        current_business_training: data.has_business_training || false,
-        current_business_registration: data.is_business_registered || false,
-        current_financial_access: data.has_financial_access || false,
-      }))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setIsLoading(false)
-    }
+  const toggle = (arr: string[], value: string, setter: (v: string[]) => void) => {
+    setter(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value])
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaving(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        throw new Error("You must be logged in to submit a follow-up survey")
-      }
-
-      const { error: insertError } = await supabase.from("followup_surveys").insert({
-        original_respondent_id: respondentId,
-        ...formData,
-        conducted_by: user.id,
-      })
-
-      if (insertError) throw insertError
-
-      setSuccess("Follow-up survey submitted successfully!")
-      setTimeout(() => {
-        router.push("/followup")
-      }, 2000)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setIsSaving(false)
-    }
+  const handleSubmit = async () => {
+    setSaving(true)
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    const { error } = await supabase.from("followup_surveys").insert({
+      original_respondent_id: respondentId,
+      attended_training: attended === "1",
+      practices_applied: practices,
+      practice_frequency: practiceFreq ? parseInt(practiceFreq) : null,
+      practice_results: results,
+      group_progress: groupProgress ? parseInt(groupProgress) : null,
+      income_change: incomeChange ? parseInt(incomeChange) : null,
+      group_earnings: groupEarnings ? parseInt(groupEarnings) : null,
+      low_interest_activities: passions,
+      lacking_support: lacking,
+      g1: gScores.g1 ? parseInt(gScores.g1) : null,
+      g2: gScores.g2 ? parseInt(gScores.g2) : null,
+      g3: gScores.g3 ? parseInt(gScores.g3) : null,
+      g4: gScores.g4 ? parseInt(gScores.g4) : null,
+      g5: gScores.g5 ? parseInt(gScores.g5) : null,
+      g6: gScores.g6 ? parseInt(gScores.g6) : null,
+      improvement_suggestion: g7,
+      example_use: g8,
+      current_challenges: challenges,
+      future_interests: future,
+      general_feedback: feedback,
+      governance_steps: governance,
+      active_members: members.active ? parseInt(members.active) : null,
+      women_members: members.women ? parseInt(members.women) : null,
+      youth_members: members.youth ? parseInt(members.youth) : null,
+      new_markets: newMarkets ? parseInt(newMarkets) : null,
+      quality_steps: qualitySteps ? parseInt(qualitySteps) : null,
+      savings_group: savingsGroup === "1",
+      conducted_by: user?.id || null,
+    })
+    if (error) setError(error.message)
+    else router.push("/followup")
+    setSaving(false)
   }
 
-  if (isLoading) {
+  if (!respondent) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading respondent data...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!originalData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Respondent not found</p>
-          <Link href="/followup">
-            <Button>Back to Follow-up List</Button>
-          </Link>
-        </div>
+      <div className="p-8">
+        <Link href="/followup" className="flex items-center mb-4 text-sm text-blue-600">
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back
+        </Link>
+        Loading...
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <Link href="/followup" className="flex items-center text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back to Follow-up List
-            </Link>
-            <div className="ml-6">
-              <h1 className="text-2xl font-bold text-gray-900">New Follow-up Survey</h1>
-              <p className="text-sm text-gray-600">Follow-up for {originalData.respondent_name || "Unknown"}</p>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="p-8 space-y-6">
+      <Link href="/followup" className="flex items-center text-sm text-blue-600">
+        <ArrowLeft className="h-4 w-4 mr-1" /> Back
+      </Link>
+      <h1 className="text-2xl font-bold">Follow-up: {respondent.respondent_name}</h1>
+      {error && <div className="text-red-600">{error}</div>}
 
-      <main className="max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* Status Messages */}
-        {error && <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
-        {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">{success}</div>
+      <div className="space-y-4">
+        <div>
+          <div className="font-medium mb-2">Did you personally attend the last CWEN training?</div>
+          <Select value={attended} onValueChange={setAttended}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Select" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Yes</SelectItem>
+              <SelectItem value="0">No</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {attended === "1" && (
+          <>
+            <div>
+              <div className="font-medium mb-2">Which CWEN-taught practices have you actually applied?</div>
+              {practiceOptions.map((p) => (
+                <label key={p} className="flex items-center space-x-2">
+                  <Checkbox checked={practices.includes(p)} onCheckedChange={() => toggle(practices, p, setPractices)} />
+                  <span>{p}</span>
+                </label>
+              ))}
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">How often do you apply the selected practices?</div>
+              <Select value={practiceFreq} onValueChange={setPracticeFreq}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Never</SelectItem>
+                  <SelectItem value="2">Occasionally</SelectItem>
+                  <SelectItem value="3">Monthly</SelectItem>
+                  <SelectItem value="4">Weekly</SelectItem>
+                  <SelectItem value="5">Daily</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">What tangible result have you seen from those practices?</div>
+              {resultOptions.map((p) => (
+                <label key={p} className="flex items-center space-x-2">
+                  <Checkbox checked={results.includes(p)} onCheckedChange={() => toggle(results, p, setResults)} />
+                  <span>{p}</span>
+                </label>
+              ))}
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">Overall, how would you rate your group’s progress since last CWEN visit?</div>
+              <Select value={groupProgress} onValueChange={setGroupProgress}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Very poor</SelectItem>
+                  <SelectItem value="2">Poor</SelectItem>
+                  <SelectItem value="3">Average</SelectItem>
+                  <SelectItem value="4">Good</SelectItem>
+                  <SelectItem value="5">Huge progress</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">Has your personal income changed since last visit?</div>
+              <Select value={incomeChange} onValueChange={setIncomeChange}>
+                <SelectTrigger className="w-60"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">UGX 0 (no change)</SelectItem>
+                  <SelectItem value="1">UGX 50k–100k</SelectItem>
+                  <SelectItem value="2">UGX 110k–250k</SelectItem>
+                  <SelectItem value="3">UGX 260k–350k</SelectItem>
+                  <SelectItem value="4">UGX 360k–500k</SelectItem>
+                  <SelectItem value="5">UGX 510k+</SelectItem>
+                  <SelectItem value="-1">I’m in debt</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">Has the group earned money since last visit?</div>
+              <Select value={groupEarnings} onValueChange={setGroupEarnings}>
+                <SelectTrigger className="w-60"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">UGX 0 (no earnings)</SelectItem>
+                  <SelectItem value="1">UGX 1–350k</SelectItem>
+                  <SelectItem value="2">UGX 360k–700k</SelectItem>
+                  <SelectItem value="3">UGX 710k–1,500k</SelectItem>
+                  <SelectItem value="4">UGX 1,510k–3,000k</SelectItem>
+                  <SelectItem value="5">UGX 3,010k+</SelectItem>
+                  <SelectItem value="-1">Operated at a loss / group debt</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">In which activities does your group have low passion / low interest?</div>
+              {passionOptions.map((p) => (
+                <label key={p} className="flex items-center space-x-2">
+                  <Checkbox checked={passions.includes(p)} onCheckedChange={() => toggle(passions, p, setPassions)} />
+                  <span>{p}</span>
+                </label>
+              ))}
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">For the activities you are pursuing, where do you feel you’re still lacking?</div>
+              {lackingOptions.map((p) => (
+                <label key={p} className="flex items-center space-x-2">
+                  <Checkbox checked={lacking.includes(p)} onCheckedChange={() => toggle(lacking, p, setLacking)} />
+                  <span>{p}</span>
+                </label>
+              ))}
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">Mentor & Training Evaluation</div>
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <div key={n} className="flex items-center space-x-2">
+                  <span className="w-8">G{n}</span>
+                  <Select value={(gScores as any)[`g${n}`]} onValueChange={(v) => setGScores({ ...gScores, [`g${n}`]: v })}>
+                    <SelectTrigger className="w-40"><SelectValue placeholder="Score" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Very poor</SelectItem>
+                      <SelectItem value="2">Poor</SelectItem>
+                      <SelectItem value="3">Fair</SelectItem>
+                      <SelectItem value="4">Good</SelectItem>
+                      <SelectItem value="5">Excellent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <div className="font-medium mb-1">What should CWEN do better next time?</div>
+              <Textarea value={g7} onChange={(e) => setG7(e.target.value)} />
+            </div>
+
+            <div>
+              <div className="font-medium mb-1">One example of how you used what you learned</div>
+              <Textarea value={g8} onChange={(e) => setG8(e.target.value)} />
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">Which challenges are you facing now? (choose top 3)</div>
+              {challengeOptions.map((p) => (
+                <label key={p} className="flex items-center space-x-2">
+                  <Checkbox checked={challenges.includes(p)} onCheckedChange={() => toggle(challenges, p, setChallenges)} />
+                  <span>{p}</span>
+                </label>
+              ))}
+            </div>
+
+            <div>
+              <div className="font-medium mb-2">What trainings or ventures would you like CWEN to support next?</div>
+              {trainingOptions.map((p) => (
+                <label key={p} className="flex items-center space-x-2">
+                  <Checkbox checked={future.includes(p)} onCheckedChange={() => toggle(future, p, setFuture)} />
+                  <span>{p}</span>
+                </label>
+              ))}
+            </div>
+          </>
         )}
 
-        {/* Original Data Summary */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Original Survey Data
-            </CardTitle>
-            <CardDescription>Reference information from the original survey</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Name:</span> {originalData.respondent_name || "N/A"}
-              </div>
-              <div>
-                <span className="font-medium">Location:</span> {originalData.district}, {originalData.sub_county}
-              </div>
-              <div>
-                <span className="font-medium">Age:</span> {originalData.age}
-              </div>
-              <div>
-                <span className="font-medium">Gender:</span> {originalData.gender}
-              </div>
-              <div>
-                <span className="font-medium">Occupation:</span> {originalData.occupation}
-              </div>
-              <div>
-                <span className="font-medium">Industry:</span> {originalData.industry_involvement}
-              </div>
-              <div>
-                <span className="font-medium">Value Chain Role:</span> {originalData.value_chain_role}
-              </div>
-              <div>
-                <span className="font-medium">Group:</span> {originalData.group_name || "N/A"}
-              </div>
-              <div>
-                <span className="font-medium">Original Survey:</span>{" "}
-                {new Date(originalData.created_at).toLocaleDateString()}
-              </div>
+        <div>
+          <div className="font-medium mb-1">Any general feedback for CWEN?</div>
+          <Textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+        </div>
+
+        {attended === "1" && (
+          <>
+            <div>
+              <div className="font-medium mb-2">Has your group formalized basic governance this period?</div>
+              {governanceOptions.map((p) => (
+                <label key={p} className="flex items-center space-x-2">
+                  <Checkbox checked={governance.includes(p)} onCheckedChange={() => toggle(governance, p, setGovernance)} />
+                  <span>{p}</span>
+                </label>
+              ))}
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Follow-up Form */}
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Progress Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                Progress Since Last Visit
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="progress_since_last_visit">Overall Progress</Label>
-                <Select
-                  value={formData.progress_since_last_visit}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, progress_since_last_visit: value })
-                  }
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select progress" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="excellent">Excellent</SelectItem>
-                    <SelectItem value="good">Good</SelectItem>
-                    <SelectItem value="fair">Fair</SelectItem>
-                    <SelectItem value="poor">Poor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="grid grid-cols-3 gap-2">
+              <Input type="number" placeholder="Active members" value={members.active} onChange={(e) => setMembers({ ...members, active: e.target.value })} />
+              <Input type="number" placeholder="Women" value={members.women} onChange={(e) => setMembers({ ...members, women: e.target.value })} />
+              <Input type="number" placeholder="Youth" value={members.youth} onChange={(e) => setMembers({ ...members, youth: e.target.value })} />
+            </div>
 
-          {/* Updated Demographics */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Updated Demographics</CardTitle>
-              <CardDescription>Update any demographic information that has changed</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="current_age">Current Age</Label>
-                  <Select
-                    value={formData.current_age}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, current_age: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select age range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15-24">15-24</SelectItem>
-                      <SelectItem value="25-34">25-34</SelectItem>
-                      <SelectItem value="35-44">35-44</SelectItem>
-                      <SelectItem value="45+">45+</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="current_occupation">Current Occupation</Label>
-                  <Select
-                    value={formData.current_occupation}
-                    onValueChange={(value) => setFormData({ ...formData, current_occupation: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select occupation" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Farmer">Farmer</SelectItem>
-                      <SelectItem value="Entreprenuer">Entrepreneur</SelectItem>
-                      <SelectItem value="Salaried job">Salaried job</SelectItem>
-                      <SelectItem value="Casual worker">Casual worker</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="current_household_size">Current Household Size</Label>
-                  <Select
-                    value={formData.current_household_size}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, current_household_size: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1-3">1-3</SelectItem>
-                      <SelectItem value="4-6">4-6</SelectItem>
-                      <SelectItem value="7+">7+</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div>
+              <div className="font-medium mb-2">Any new buyers/markets since training?</div>
+              <Select value={newMarkets} onValueChange={setNewMarkets}>
+                <SelectTrigger className="w-60"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">None</SelectItem>
+                  <SelectItem value="1">New local buyers</SelectItem>
+                  <SelectItem value="2">New regional buyers</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Business Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Business Progress</CardTitle>
-              <CardDescription>Track changes in business status and growth</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="business_growth_status">Business Growth Status</Label>
-                  <Select
-                    value={formData.business_growth_status}
-                    onValueChange={(value) => setFormData({ ...formData, business_growth_status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select growth status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Expanded">Expanded</SelectItem>
-                      <SelectItem value="Same">Same</SelectItem>
-                      <SelectItem value="Declined">Declined</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="revenue_change">Revenue Change</Label>
-                  <Select
-                    value={formData.revenue_change}
-                    onValueChange={(value) => setFormData({ ...formData, revenue_change: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select revenue change" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Increased">Increased</SelectItem>
-                      <SelectItem value="Same">Same</SelectItem>
-                      <SelectItem value="Decreased">Decreased</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            <div>
+              <div className="font-medium mb-2">Have you started any quality steps?</div>
+              <Select value={qualitySteps} onValueChange={setQualitySteps}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">No</SelectItem>
+                  <SelectItem value="1">In progress</SelectItem>
+                  <SelectItem value="2">Completed stage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div>
-                <Label htmlFor="new_economic_activities">New Economic Activities</Label>
-                <Select
-                  value={formData.new_economic_activities}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, new_economic_activities: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select activity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    <SelectItem value="crop farming">Crop farming</SelectItem>
-                    <SelectItem value="livestock">Livestock</SelectItem>
-                    <SelectItem value="trading">Trading</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+            <div>
+              <div className="font-medium mb-2">Do you belong to a savings group (VSLA/SACCO)?</div>
+              <Select value={savingsGroup} onValueChange={setSavingsGroup}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Yes</SelectItem>
+                  <SelectItem value="0">No</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
+      </div>
 
-          {/* Technology Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Technology Adoption Progress</CardTitle>
-              <CardDescription>Track progress in technology usage</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="technology_adoption_progress">Technology Adoption Progress</Label>
-                <Select
-                  value={formData.technology_adoption_progress}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, technology_adoption_progress: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select progress" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="advanced">Advanced</SelectItem>
-                    <SelectItem value="intermediate">Intermediate</SelectItem>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="none">None</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Goals and Achievements */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Goals and Achievements</CardTitle>
-              <CardDescription>Track achievement of previous goals and new objectives</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="reasons_for_unachieved_goals">Reasons for Unachieved Goals</Label>
-                <Select
-                  value={formData.reasons_for_unachieved_goals}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, reasons_for_unachieved_goals: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select reason" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lack of funds">Lack of funds</SelectItem>
-                    <SelectItem value="training needed">Training needed</SelectItem>
-                    <SelectItem value="market constraints">Market constraints</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="new_support_needed">New Support Needed</Label>
-                <Select
-                  value={formData.new_support_needed}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, new_support_needed: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select support" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="financial">Financial</SelectItem>
-                    <SelectItem value="training">Training</SelectItem>
-                    <SelectItem value="market access">Market access</SelectItem>
-                    <SelectItem value="technology">Technology</SelectItem>
-                    <SelectItem value="none">None</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Current Status Checkboxes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Status</CardTitle>
-              <CardDescription>Update current status of various aspects</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="current_business_training"
-                    checked={formData.current_business_training}
-                    onCheckedChange={(checked) => setFormData({ ...formData, current_business_training: !!checked })}
-                  />
-                  <Label htmlFor="current_business_training">Has business training</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="current_business_registration"
-                    checked={formData.current_business_registration}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, current_business_registration: !!checked })
-                    }
-                  />
-                  <Label htmlFor="current_business_registration">Business is registered</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="current_financial_access"
-                    checked={formData.current_financial_access}
-                    onCheckedChange={(checked) => setFormData({ ...formData, current_financial_access: !!checked })}
-                  />
-                  <Label htmlFor="current_financial_access">Has financial access</Label>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recommendations and Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recommendations and Notes</CardTitle>
-              <CardDescription>Additional observations and recommendations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="recommendations">Recommendations</Label>
-                <Select
-                  value={formData.recommendations}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, recommendations: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select recommendation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="continue current strategy">Continue current strategy</SelectItem>
-                    <SelectItem value="invest in training">Invest in training</SelectItem>
-                    <SelectItem value="seek financial support">Seek financial support</SelectItem>
-                    <SelectItem value="consider partnership">Consider partnership</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="additional_notes">Additional Notes</Label>
-                <Select
-                  value={formData.additional_notes}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, additional_notes: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select note" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    <SelectItem value="needs follow up">Needs follow up</SelectItem>
-                    <SelectItem value="success story">Success story</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Submit Button */}
-          <div className="flex justify-end space-x-4">
-            <Link href="/followup">
-              <Button type="button" variant="outline">
-                Cancel
-              </Button>
-            </Link>
-            <Button type="submit" disabled={isSaving}>
-              <Save className="h-4 w-4 mr-2" />
-              {isSaving ? "Saving..." : "Save Follow-up Survey"}
-            </Button>
-          </div>
-        </form>
-      </main>
+      <Button onClick={handleSubmit} disabled={saving}>Submit</Button>
     </div>
   )
 }
+

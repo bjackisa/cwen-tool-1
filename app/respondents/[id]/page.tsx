@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft } from "lucide-react"
 
 interface Respondent {
@@ -24,33 +25,46 @@ interface Respondent {
   created_at: string
 }
 
+interface Industry {
+  id: string
+  name: string
+}
+
 export default function RespondentDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { id } = params
 
   const [respondent, setRespondent] = useState<Respondent | null>(null)
   const [formData, setFormData] = useState<Respondent | null>(null)
+  const [industries, setIndustries] = useState<Industry[]>([])
+  const [selectedIndustries, setSelectedIndustries] = useState<string[]>([])
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchRespondent = async () => {
+    const fetchData = async () => {
       try {
         const supabase = createClient()
-        const { data, error } = await supabase
-          .from("survey_respondents")
-          .select(
-            `id, district, sub_county, parish, age, gender, education_level,
-            occupation, industry_involvement, value_chain_role, respondent_name,
-            group_name, created_at`
-          )
-          .eq("id", id)
-          .single()
+        const [resp, inds, links] = await Promise.all([
+          supabase
+            .from("survey_respondents")
+            .select(
+              `id, district, sub_county, parish, age, gender, education_level,
+              occupation, industry_involvement, value_chain_role, respondent_name,
+              group_name, created_at`
+            )
+            .eq("id", id)
+            .single(),
+          supabase.from("industries").select("*").order("name"),
+          supabase.from("respondent_industries").select("industry_id").eq("respondent_id", id),
+        ])
 
-        if (error) throw error
-        setRespondent(data)
-        setFormData(data)
+        if (resp.error) throw resp.error
+        setRespondent(resp.data)
+        setFormData(resp.data)
+        setIndustries((inds.data || []) as Industry[])
+        setSelectedIndustries((links.data || []).map((l: any) => l.industry_id))
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred")
       } finally {
@@ -58,7 +72,7 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
       }
     }
 
-    fetchRespondent()
+    fetchData()
   }, [id])
 
   const handleChange = (field: keyof Respondent, value: string) => {
@@ -68,6 +82,10 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
   const handleSave = async () => {
     if (!formData) return
     const supabase = createClient()
+    const names = selectedIndustries
+      .map((id) => industries.find((i) => i.id === id)?.name)
+      .filter(Boolean)
+      .join(", ")
     const { error } = await supabase
       .from("survey_respondents")
       .update({
@@ -78,7 +96,7 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
         gender: formData.gender,
         education_level: formData.education_level,
         occupation: formData.occupation,
-        industry_involvement: formData.industry_involvement,
+        industry_involvement: names,
         value_chain_role: formData.value_chain_role,
         respondent_name: formData.respondent_name,
         group_name: formData.group_name,
@@ -87,10 +105,17 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
 
     if (error) {
       setError(error.message)
-    } else {
-      setRespondent(formData)
-      setIsEditing(false)
+      return
     }
+
+    await supabase.from("respondent_industries").delete().eq("respondent_id", id)
+    if (selectedIndustries.length) {
+      const rows = selectedIndustries.map((indId) => ({ respondent_id: id, industry_id: indId }))
+      await supabase.from("respondent_industries").insert(rows)
+    }
+
+    setRespondent({ ...formData, industry_involvement: names })
+    setIsEditing(false)
   }
 
   if (isLoading) {
@@ -177,11 +202,24 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
                     onChange={(e) => handleChange("occupation", e.target.value)}
                     placeholder="Occupation"
                   />
-                  <Input
-                    value={formData.industry_involvement || ""}
-                    onChange={(e) => handleChange("industry_involvement", e.target.value)}
-                    placeholder="Industry"
-                  />
+                  <div className="col-span-2">
+                    <div className="font-medium mb-2">Industries</div>
+                    <div className="space-y-2">
+                      {industries.map((ind) => (
+                        <label key={ind.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={selectedIndustries.includes(ind.id)}
+                            onCheckedChange={(checked) => {
+                              setSelectedIndustries((prev) =>
+                                checked ? [...prev, ind.id] : prev.filter((i) => i !== ind.id),
+                              )
+                            }}
+                          />
+                          <span>{ind.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                   <Input
                     value={formData.value_chain_role || ""}
                     onChange={(e) => handleChange("value_chain_role", e.target.value)}
