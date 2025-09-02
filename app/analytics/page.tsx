@@ -41,10 +41,20 @@ export default function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all")
   const [selectedGender, setSelectedGender] = useState<string>("all")
+  const [districts, setDistricts] = useState<string[]>([])
 
   useEffect(() => {
     fetchAnalyticsData()
   }, [selectedDistrict, selectedGender])
+
+  useEffect(() => {
+    const loadDistricts = async () => {
+      const supabase = createClient()
+      const { data } = await supabase.from("districts").select("name").order("name")
+      setDistricts((data || []).map((d) => d.name))
+    }
+    loadDistricts()
+  }, [])
 
   const fetchAnalyticsData = async () => {
     try {
@@ -289,11 +299,14 @@ export default function AnalyticsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Districts</SelectItem>
-                    {data?.geography.districts.map((district) => (
-                      <SelectItem key={district.name} value={district.name}>
-                        {district.name} ({district.value})
-                      </SelectItem>
-                    ))}
+                    {districts.map((d) => {
+                      const count = data?.geography.districts.find((dist) => dist.name === d)?.value || 0
+                      return (
+                        <SelectItem key={d} value={d}>
+                          {d} ({count})
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
               </div>

@@ -35,6 +35,8 @@ export default function RespondentsPage() {
   const [district, setDistrict] = useState("")
   const [gender, setGender] = useState("")
   const [industry, setIndustry] = useState("")
+  const [districts, setDistricts] = useState<string[]>([])
+  const [industries, setIndustries] = useState<string[]>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -68,12 +70,15 @@ export default function RespondentsPage() {
   const loadRespondents = async () => {
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
-        .from("survey_respondents")
-        .select("*")
-        .order("timestamp", { ascending: false })
-      if (error) throw error
-      setRespondents(data || [])
+      const [resp, dist, inds] = await Promise.all([
+        supabase.from("survey_respondents").select("*").order("timestamp", { ascending: false }),
+        supabase.from("districts").select("name").order("name"),
+        supabase.from("industries").select("name").order("name"),
+      ])
+      if (resp.error) throw resp.error
+      setRespondents(resp.data || [])
+      setDistricts((dist.data || []).map((d) => d.name))
+      setIndustries((inds.data || []).map((i) => i.name))
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -93,9 +98,7 @@ export default function RespondentsPage() {
     }
   }
 
-  const districts = Array.from(new Set(respondents.map((r) => r.district).filter(Boolean))).sort()
   const genders = Array.from(new Set(respondents.map((r) => r.gender).filter(Boolean))).sort()
-  const industries = Array.from(new Set(respondents.map((r) => r.industry_involvement).filter(Boolean))).sort()
 
   if (isLoading) {
     return (
