@@ -12,12 +12,20 @@ import {
   Database,
   Menu,
   X,
+  MapPin,
+  Layers,
+  Map,
+  Factory,
 } from "lucide-react"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/respondents", label: "Respondents", icon: Users },
+  { href: "/districts", label: "Districts", icon: MapPin },
+  { href: "/groups", label: "Groups", icon: Layers },
+  { href: "/locations", label: "Locations", icon: Map },
+  { href: "/industries", label: "Industries", icon: Factory },
   { href: "/reports", label: "Reports", icon: FileText },
   { href: "/data-import", label: "Data Import", icon: Database },
 ]
