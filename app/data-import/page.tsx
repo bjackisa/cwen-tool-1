@@ -41,6 +41,8 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
   const [selectedDistrict, setSelectedDistrict] = useState("")
   const [selectedGender, setSelectedGender] = useState("")
   const [selectedIndustry, setSelectedIndustry] = useState("")
+  const [districts, setDistricts] = useState<string[]>([])
+  const [industries, setIndustries] = useState<string[]>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -78,15 +80,18 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
   const loadSurveyData = async () => {
     try {
       const supabase = createClient()
-      const { data, error } = await supabase
-        .from("survey_respondents")
-        .select("*")
-        .order("timestamp", { ascending: false })
+      const [resp, dist, inds] = await Promise.all([
+        supabase.from("survey_respondents").select("*").order("timestamp", { ascending: false }),
+        supabase.from("districts").select("name").order("name"),
+        supabase.from("industries").select("name").order("name"),
+      ])
 
-      if (error) throw error
+      if (resp.error) throw resp.error
 
-      setRespondents(data || [])
-      setFilteredRespondents(data || [])
+      setRespondents(resp.data || [])
+      setFilteredRespondents(resp.data || [])
+      setDistricts((dist.data || []).map((d) => d.name))
+      setIndustries((inds.data || []).map((i) => i.name))
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred loading data")
     } finally {
@@ -94,9 +99,7 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
     }
   }
 
-  const uniqueDistricts = [...new Set(respondents.map((r) => r.district).filter(Boolean))].sort()
   const uniqueGenders = [...new Set(respondents.map((r) => r.gender).filter(Boolean))].sort()
-  const uniqueIndustries = [...new Set(respondents.map((r) => r.industry_involvement).filter(Boolean))].sort()
 
   const exportData = () => {
     const csvContent = [
@@ -221,7 +224,7 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
                 <MapPin className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Districts Covered</p>
-                  <p className="text-2xl font-bold text-gray-900">{uniqueDistricts.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{districts.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -291,7 +294,7 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All Districts</option>
-                  {uniqueDistricts.map((district) => (
+                  {districts.map((district) => (
                     <option key={district} value={district}>
                       {district}
                     </option>
@@ -323,7 +326,7 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All Industries</option>
-                  {uniqueIndustries.map((industry) => (
+                  {industries.map((industry) => (
                     <option key={industry} value={industry}>
                       {industry}
                     </option>

@@ -59,6 +59,7 @@ export default function ComparisonPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all")
   const [viewMode, setViewMode] = useState<"individual" | "aggregate">("individual")
+  const [districts, setDistricts] = useState<string[]>([])
 
   useEffect(() => {
     fetchComparisonData()
@@ -72,29 +73,33 @@ export default function ComparisonPage() {
     try {
       const supabase = createClient()
 
-      // Get respondents with their follow-ups
-      const { data: respondentsData, error: respondentsError } = await supabase
-        .from("survey_respondents")
-        .select(`
-          id, respondent_name, district, sub_county, parish, age, gender,
-          occupation, industry_involvement, value_chain_role, has_business_training,
-          is_business_registered, has_financial_access, uses_technology, created_at,
-          followup_surveys:followup_surveys(
-            id, visit_date, current_age, current_occupation, business_growth_status,
-            revenue_change, current_business_training, current_business_registration,
-            current_financial_access, technology_adoption_progress
-          )
-        `)
-        .order("created_at", { ascending: false })
+      // Get respondents with their follow-ups and district list
+      const [resp, dist] = await Promise.all([
+        supabase
+          .from("survey_respondents")
+          .select(`
+            id, respondent_name, district, sub_county, parish, age, gender,
+            occupation, industry_involvement, value_chain_role, has_business_training,
+            is_business_registered, has_financial_access, uses_technology, created_at,
+            followup_surveys:followup_surveys(
+              id, visit_date, current_age, current_occupation, business_growth_status,
+              revenue_change, current_business_training, current_business_registration,
+              current_financial_access, technology_adoption_progress
+            )
+          `)
+          .order("created_at", { ascending: false }),
+        supabase.from("districts").select("name").order("name"),
+      ])
 
-      if (respondentsError) throw respondentsError
+      if (resp.error) throw resp.error
 
-      const processedData = (respondentsData || []).map((respondent) => ({
+      const processedData = (resp.data || []).map((respondent) => ({
         ...respondent,
         followups: respondent.followup_surveys || [],
       }))
 
       setRespondents(processedData)
+      setDistricts((dist.data || []).map((d) => d.name))
 
       // Calculate comparison metrics
       const comparisonMetrics = calculateComparisonMetrics(processedData)
@@ -191,7 +196,6 @@ export default function ComparisonPage() {
     return <Minus className="h-4 w-4 text-gray-400" />
   }
 
-  const uniqueDistricts = [...new Set(respondents.map((r) => r.district).filter(Boolean))]
 
   if (isLoading) {
     return (
@@ -380,7 +384,7 @@ export default function ComparisonPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Districts</SelectItem>
-                        {uniqueDistricts.map((district) => (
+                        {districts.map((district) => (
                           <SelectItem key={district} value={district}>
                             {district}
                           </SelectItem>
