@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft } from "lucide-react"
@@ -123,6 +124,7 @@ export default function NewFollowupPage() {
   const [incomeChange, setIncomeChange] = useState("")
   const [groupEarnings, setGroupEarnings] = useState("")
   const [passions, setPassions] = useState<string[]>([])
+  const [otherPassion, setOtherPassion] = useState("")
   const [lacking, setLacking] = useState<string[]>([])
   const [gScores, setGScores] = useState({ g1: "", g2: "", g3: "", g4: "", g5: "", g6: "" })
   const [g7, setG7] = useState("")
@@ -167,7 +169,9 @@ export default function NewFollowupPage() {
       group_progress: groupProgress ? parseInt(groupProgress) : null,
       income_change: incomeChange ? parseInt(incomeChange) : null,
       group_earnings: groupEarnings ? parseInt(groupEarnings) : null,
-      low_interest_activities: passions,
+      low_interest_activities: passions
+        .map((p) => (p === "Other" ? otherPassion : p))
+        .filter(Boolean),
       lacking_support: lacking,
       g1: gScores.g1 ? parseInt(gScores.g1) : null,
       g2: gScores.g2 ? parseInt(gScores.g2) : null,
@@ -316,17 +320,37 @@ export default function NewFollowupPage() {
           {
             question: "In which activities does your group have low passion / low interest?",
             auto: false,
-            render: () => (
-              <div className="space-y-2">
-                {passionOptions.map((p) => (
-                  <label key={p} className="flex items-center space-x-2">
-                    <Checkbox checked={passions.includes(p)} onCheckedChange={() => toggle(passions, p, setPassions)} />
+          render: () => (
+            <div className="space-y-2">
+              {passionOptions.map((p) => (
+                <label key={p} className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={passions.includes(p)}
+                    onCheckedChange={(checked) => {
+                      toggle(passions, p, setPassions)
+                      if (!checked && p === "Other") setOtherPassion("")
+                    }}
+                  />
+                  {p === "Other" ? (
+                    <>
+                      <span>Other:</span>
+                      {passions.includes("Other") && (
+                        <Input
+                          value={otherPassion}
+                          onChange={(e) => setOtherPassion(e.target.value)}
+                          placeholder="Specify"
+                          className="h-8"
+                        />
+                      )}
+                    </>
+                  ) : (
                     <span>{p}</span>
-                  </label>
-                ))}
-              </div>
-            ),
-          },
+                  )}
+                </label>
+              ))}
+            </div>
+          ),
+        },
           {
             question: "For the activities you are pursuing, where do you feel you’re still lacking?",
             auto: false,
