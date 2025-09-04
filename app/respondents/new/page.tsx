@@ -45,6 +45,7 @@ export default function NewRespondentPage() {
   })
   const [industries, setIndustries] = useState<Industry[]>([])
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([])
+  const [newIndustry, setNewIndustry] = useState("")
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -62,6 +63,23 @@ export default function NewRespondentPage() {
 
   const handleChange = (field: keyof Respondent, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const addIndustry = async () => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("industries")
+      .insert({ name: newIndustry })
+      .select()
+      .single()
+    if (error) {
+      setError(error.message)
+      return
+    }
+    const added = data as Industry
+    setIndustries([...industries, added].sort((a, b) => a.name.localeCompare(b.name)))
+    setSelectedIndustries([...selectedIndustries, added.id])
+    setNewIndustry("")
   }
 
   const handleSave = async () => {
@@ -190,6 +208,14 @@ export default function NewRespondentPage() {
                         <span>{ind.name}</span>
                       </label>
                     ))}
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        value={newIndustry}
+                        onChange={(e) => setNewIndustry(e.target.value)}
+                        placeholder="Other industry"
+                      />
+                      <Button onClick={addIndustry} disabled={!newIndustry.trim()}>Add</Button>
+                    </div>
                   </div>
                 </div>
                 <Input
