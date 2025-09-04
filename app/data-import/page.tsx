@@ -101,6 +101,18 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
 
   const uniqueGenders = [...new Set(respondents.map((r) => r.gender).filter(Boolean))].sort()
 
+  const coffeeFarmersCount = respondents.filter(
+    (r) =>
+      r.value_chain_role?.toLowerCase().includes("farmer") &&
+      r.industry_involvement?.toLowerCase().includes("coffee"),
+  ).length
+
+  const teaFarmersCount = respondents.filter(
+    (r) =>
+      r.value_chain_role?.toLowerCase().includes("farmer") &&
+      r.industry_involvement?.toLowerCase().includes("tea"),
+  ).length
+
   const exportData = () => {
     const csvContent = [
       // CSV headers
@@ -238,9 +250,7 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Coffee Farmers</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {respondents.filter((r) => r.industry_involvement === "Coffee").length}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{coffeeFarmersCount}</p>
                 </div>
               </div>
             </CardContent>
@@ -254,9 +264,7 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Tea Farmers</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {respondents.filter((r) => r.industry_involvement === "Tea").length}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{teaFarmersCount}</p>
                 </div>
               </div>
             </CardContent>
