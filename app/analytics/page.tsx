@@ -6,7 +6,17 @@ import { normalize, toTitleCase } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Download, Filter, Users, MapPin, Briefcase, TrendingUp } from "lucide-react"
+import {
+  ArrowLeft,
+  Download,
+  Filter,
+  Users,
+  MapPin,
+  Briefcase,
+  TrendingUp,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react"
 import Link from "next/link"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Sankey } from "recharts"
 
@@ -50,10 +60,11 @@ export default function AnalyticsPage() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all")
   const [selectedGender, setSelectedGender] = useState<string>("all")
   const [districts, setDistricts] = useState<string[]>([])
+  const [sankeyZoom, setSankeyZoom] = useState(1)
 
-  const sankeyWidth = Math.max(
-    (data?.business.challengeSankey.nodes.length ?? 0) * 120,
-    600,
+  const sankeyHeight = Math.max(
+    (data?.business.challengeSankey.nodes.length ?? 0) * 40,
+    400,
   )
 
   useEffect(() => {
@@ -330,6 +341,9 @@ export default function AnalyticsPage() {
     window.URL.revokeObjectURL(url)
   }
 
+  const zoomIn = () => setSankeyZoom((z) => Math.min(z + 0.2, 2))
+  const zoomOut = () => setSankeyZoom((z) => Math.max(z - 0.2, 0.5))
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -598,13 +612,33 @@ export default function AnalyticsPage() {
 
         {/* Top Business Challenges */}
         <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Top Business Challenges</CardTitle>
-            <CardDescription>Links between groups and their challenges</CardDescription>
+          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle>Top Business Challenges</CardTitle>
+              <CardDescription>Links between groups and their challenges</CardDescription>
+            </div>
+            <div className="flex items-center space-x-2 mt-4 md:mt-0">
+              <Button variant="outline" size="icon" onClick={zoomOut} aria-label="Zoom out">
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={zoomIn} aria-label="Zoom in">
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="w-full overflow-auto">
-              <div style={{ width: sankeyWidth, height: 400 }}>
+            <div
+              className="w-full overflow-y-auto overflow-x-hidden"
+              style={{ maxHeight: 400 }}
+            >
+              <div
+                style={{
+                  width: `${100 / sankeyZoom}%`,
+                  height: sankeyHeight / sankeyZoom,
+                  transform: `scale(${sankeyZoom})`,
+                  transformOrigin: "top left",
+                }}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <Sankey
                     data={data?.business.challengeSankey}
