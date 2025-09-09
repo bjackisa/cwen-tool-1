@@ -22,6 +22,7 @@ import {
   YAxis,
   Tooltip,
   Bar,
+  Line,
 } from "recharts"
 
 interface FollowupTabProps {
@@ -30,7 +31,36 @@ interface FollowupTabProps {
   selectedGroup: string
 }
 
-const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4", "#84CC16", "#F97316"]
+const COLORS = [
+  "#3B82F6",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#06B6D4",
+  "#84CC16",
+  "#F97316",
+]
+
+const GP_LABELS = ["Very Poor", "Poor", "Average", "Good", "Very Good"]
+const INCOME_LABELS: Record<number, string> = {
+  [-1]: "I’m in debt",
+  0: "UGX 0 (no change)",
+  1: "UGX 50k–100k",
+  2: "UGX 110k–250k",
+  3: "UGX 260k–350k",
+  4: "UGX 360k–500k",
+  5: "UGX 510k+",
+}
+const EARNINGS_LABELS: Record<number, string> = {
+  [-1]: "Operated at a loss / group debt",
+  0: "UGX 0 (no earnings)",
+  1: "UGX 1–350k",
+  2: "UGX 360k–700k",
+  3: "UGX 710k–1,500k",
+  4: "UGX 1,510k–3,000k",
+  5: "UGX 3,010k+",
+}
 
 export default function FollowupTab({
   selectedDistrict,
@@ -51,6 +81,12 @@ export default function FollowupTab({
   const [frequencies, setFrequencies] = useState<{ name: string; value: number }[]>([])
   const [results, setResults] = useState<{ name: string; value: number }[]>([])
   const [groupProgress, setGroupProgress] = useState<
+    { name: string; avg: number; gpa: number; color: string }[]
+  >([])
+  const [incomeChanges, setIncomeChanges] = useState<
+    { name: string; value: number; color: string }[]
+  >([])
+  const [groupEarnings, setGroupEarnings] = useState<
     { name: string; value: number; color: string }[]
   >([])
 
@@ -113,6 +149,8 @@ export default function FollowupTab({
       }
       const resultCounts: Record<string, number> = {}
       const progressSums: Record<string, { sum: number; count: number }> = {}
+      const incomeSums: Record<string, { sum: number; count: number }> = {}
+      const earningSums: Record<string, { sum: number; count: number }> = {}
 
       ;(followups || []).forEach((f) => {
         ;(f.practices_applied || []).forEach((p: string) => {
@@ -140,6 +178,18 @@ export default function FollowupTab({
           progressSums[group].sum += gp
           progressSums[group].count += 1
         }
+        const income = f.income_change
+        if (income != null) {
+          if (!incomeSums[group]) incomeSums[group] = { sum: 0, count: 0 }
+          incomeSums[group].sum += income
+          incomeSums[group].count += 1
+        }
+        const earn = f.group_earnings
+        if (earn != null) {
+          if (!earningSums[group]) earningSums[group] = { sum: 0, count: 0 }
+          earningSums[group].sum += earn
+          earningSums[group].count += 1
+        }
       })
 
       const practicesData = Object.entries(practiceCounts).map(([name, value]) => ({
@@ -154,11 +204,28 @@ export default function FollowupTab({
         name,
         value,
       }))
-      const gpData = Object.entries(progressSums).map(([name, { sum, count }], i) => ({
-        name,
-        value: sum / count,
-        color: COLORS[i % COLORS.length],
-      }))
+      const gpData = Object.entries(progressSums).map(
+        ([name, { sum, count }], i) => ({
+          name,
+          avg: sum / count,
+          gpa: sum / count,
+          color: COLORS[i % COLORS.length],
+        }),
+      )
+      const incomeData = Object.entries(incomeSums).map(
+        ([name, { sum, count }], i) => ({
+          name,
+          value: Math.round(sum / count),
+          color: COLORS[i % COLORS.length],
+        }),
+      )
+      const earningData = Object.entries(earningSums).map(
+        ([name, { sum, count }], i) => ({
+          name,
+          value: Math.round(sum / count),
+          color: COLORS[i % COLORS.length],
+        }),
+      )
 
       setSummary({
         totalRespondents,
@@ -170,6 +237,8 @@ export default function FollowupTab({
       setFrequencies(freqData)
       setResults(resultsData)
       setGroupProgress(gpData)
+      setIncomeChanges(incomeData)
+      setGroupEarnings(earningData)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -207,60 +276,118 @@ export default function FollowupTab({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Skills Applied</CardTitle>
-        </CardHeader>
-        <CardContent className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={practices}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="name" />
-              <PolarRadiusAxis />
-              <Radar
-                dataKey="value"
-                stroke="#3B82F6"
-                fill="#3B82F6"
-                fillOpacity={0.6}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Skills Applied</CardTitle>
+          </CardHeader>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={practices}>
+                <PolarGrid />
+                <PolarAngleAxis dataKey="name" />
+                <PolarRadiusAxis />
+                <Radar
+                  dataKey="value"
+                  stroke="#3B82F6"
+                  fill="#3B82F6"
+                  fillOpacity={0.6}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Practice Frequency</CardTitle>
-        </CardHeader>
-        <CardContent className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie dataKey="value" data={frequencies} innerRadius={60} outerRadius={100}>
-                {frequencies.map((entry, index) => (
-                  <Cell key={`freq-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Practice Frequency</CardTitle>
+          </CardHeader>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  dataKey="value"
+                  data={frequencies}
+                  innerRadius={60}
+                  outerRadius={100}
+                  label={({ name }) => name}
+                  labelLine={false}
+                >
+                  {frequencies.map((entry, index) => (
+                    <Cell key={`freq-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Training Results</CardTitle>
-        </CardHeader>
-        <CardContent className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <FunnelChart>
-              <Tooltip />
-              <Funnel dataKey="value" data={results}>
-                <LabelList position="right" fill="#000" stroke="none" dataKey="name" />
-              </Funnel>
-            </FunnelChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Training Results</CardTitle>
+          </CardHeader>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <FunnelChart>
+                <Tooltip />
+                <Funnel dataKey="value" data={results}>
+                  {results.map((entry, index) => (
+                    <Cell key={`res-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                  <LabelList position="right" fill="#000" stroke="none" dataKey="name" />
+                </Funnel>
+              </FunnelChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Average Personal Income Change</CardTitle>
+          </CardHeader>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  dataKey="value"
+                  data={incomeChanges}
+                  label={({ name }) => name}
+                  labelLine={false}
+                >
+                  {incomeChanges.map((entry, index) => (
+                    <Cell key={`inc-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v: number) => INCOME_LABELS[v]} />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Average Group Earnings</CardTitle>
+          </CardHeader>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  dataKey="value"
+                  data={groupEarnings}
+                  label={({ name }) => name}
+                  labelLine={false}
+                >
+                  {groupEarnings.map((entry, index) => (
+                    <Cell key={`earn-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v: number) => EARNINGS_LABELS[v]} />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
@@ -270,15 +397,24 @@ export default function FollowupTab({
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={groupProgress}>
               <XAxis dataKey="name" />
-              <YAxis domain={[0, 5]} />
-              <Tooltip />
-              <Bar dataKey="value">
+              <YAxis
+                domain={[1, 5]}
+                ticks={[1, 2, 3, 4, 5]}
+                tickFormatter={(v) => GP_LABELS[v - 1]}
+              />
+              <Tooltip formatter={(v) => GP_LABELS[Math.round((v as number) - 1)]} />
+              <Bar dataKey="avg">
                 {groupProgress.map((entry, index) => (
                   <Cell key={`gp-${index}`} fill={entry.color} />
                 ))}
               </Bar>
+              <Line type="monotone" dataKey="gpa" stroke="#000" />
             </ComposedChart>
           </ResponsiveContainer>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Note: Progress was graded by group respondents themselves during
+            follow-up and not by our on-ground observations.
+          </p>
         </CardContent>
       </Card>
     </div>
