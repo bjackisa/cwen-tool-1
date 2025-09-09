@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { normalize, toTitleCase } from "@/lib/utils"
 
 interface District { id: string; name: string }
 
@@ -16,19 +17,22 @@ export default function DistrictsPage() {
   const load = async () => {
     const { data, error } = await supabase.from("districts").select("*").order("name")
     if (error) setError(error.message)
-    else setDistricts(data as District[])
+    else setDistricts((data || []).map((d) => ({ ...d, name: toTitleCase(d.name) })))
   }
 
   useEffect(() => { load() }, [])
 
   const add = async () => {
-    const { error } = await supabase.from("districts").insert({ name: newName })
+    const value = toTitleCase(newName)
+    const { error } = await supabase.from("districts").insert({ name: normalize(value) })
     if (error) setError(error.message)
     else { setNewName(""); load() }
   }
 
   const update = async (id: string, name: string) => {
-    const { error } = await supabase.from("districts").update({ name }).eq("id", id)
+    const value = toTitleCase(name)
+    setDistricts((prev) => prev.map((d) => (d.id === id ? { ...d, name: value } : d)))
+    const { error } = await supabase.from("districts").update({ name: normalize(value) }).eq("id", id)
     if (error) setError(error.message)
   }
 
@@ -44,7 +48,7 @@ export default function DistrictsPage() {
       <h1 className="text-2xl font-bold">Districts</h1>
       {error && <div className="text-red-600">{error}</div>}
       <div className="flex space-x-2">
-        <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="New district" />
+        <Input value={newName} onChange={(e) => setNewName(toTitleCase(e.target.value))} placeholder="New district" />
         <Button onClick={add} disabled={!newName.trim()}>Add</Button>
       </div>
       <ul className="space-y-2">
