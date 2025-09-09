@@ -23,6 +23,7 @@ interface AnalyticsData {
   business: {
     occupation: { name: string; value: number }[]
     industry: { name: string; value: number }[]
+    industrySummary: { name: string; value: number }[]
     valueChain: { name: string; value: number }[]
     challenges: { name: string; value: number }[]
   }
@@ -144,11 +145,31 @@ export default function AnalyticsPage() {
       return acc
     }, {})
 
-    const industryCounts = respondents.reduce((acc, r) => {
-      const industry = toTitleCase(r.industry_involvement || "Unknown")
-      acc[industry] = (acc[industry] || 0) + 1
-      return acc
-    }, {})
+    // Industry involvement is case-insensitive. We separate overall coffee/tea
+    // participation and detailed combinations for the donut chart.
+    const industrySummaryCounts = { Coffee: 0, Tea: 0 }
+    const industryDetailCounts: Record<string, number> = {}
+    respondents.forEach((r) => {
+      const raw = r.industry_involvement?.toString().trim() || ""
+      if (!raw) {
+        industryDetailCounts["Unknown"] = (industryDetailCounts["Unknown"] || 0) + 1
+        return
+      }
+      const parts = raw.split(",").map((p: string) => p.trim()).filter(Boolean)
+      const lower = parts.map((p) => p.toLowerCase())
+      const hasCoffee = lower.includes("coffee")
+      const hasTea = lower.includes("tea")
+      if (hasCoffee) industrySummaryCounts.Coffee++
+      if (hasTea) industrySummaryCounts.Tea++
+
+      const others = parts.filter((_, idx) => !["coffee", "tea"].includes(lower[idx])).map(toTitleCase)
+      const labelParts: string[] = []
+      if (hasCoffee) labelParts.push("Coffee")
+      if (hasTea) labelParts.push("Tea")
+      if (others.length) labelParts.push(...others)
+      const label = labelParts.length ? labelParts.join(" + ") : toTitleCase(raw)
+      industryDetailCounts[label] = (industryDetailCounts[label] || 0) + 1
+    })
 
     const valueChainCounts = respondents.reduce((acc, r) => {
       const role = toTitleCase(r.value_chain_role || "Unknown")
@@ -201,6 +222,9 @@ export default function AnalyticsPage() {
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value)
 
+    const industrySummary = toChartData(industrySummaryCounts)
+    const industry = toChartData(industryDetailCounts)
+
     return {
       totalRespondents,
       coffeeFarmers,
@@ -213,7 +237,8 @@ export default function AnalyticsPage() {
       },
       business: {
         occupation: toChartData(occupationCounts),
-        industry: toChartData(industryCounts),
+        industry,
+        industrySummary,
         valueChain: toChartData(valueChainCounts),
         challenges: toChartData(challengeCounts).slice(0, 10), // Top 10 challenges
       },
@@ -239,7 +264,8 @@ export default function AnalyticsPage() {
       ...data.demographics.gender.map((item) => ["Gender", item.name, item.value.toString()]),
       ...data.demographics.education.map((item) => ["Education", item.name, item.value.toString()]),
       ...data.business.occupation.map((item) => ["Occupation", item.name, item.value.toString()]),
-      ...data.business.industry.map((item) => ["Industry", item.name, item.value.toString()]),
+      ...data.business.industrySummary.map((item) => ["Industry Summary", item.name, item.value.toString()]),
+      ...data.business.industry.map((item) => ["Industry Detail", item.name, item.value.toString()]),
       ...data.geography.districts.map((item) => ["District", item.name, item.value.toString()]),
     ]
       .map((row) => row.map((cell) => `"${cell}"`).join(","))
@@ -468,17 +494,31 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
+                    data={data?.business.industrySummary}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={60}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {data?.business.industrySummary.map((entry, index) => (
+                      <Cell key={`cell-summary-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Pie
                     data={data?.business.industry}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
+                    innerRadius={70}
+                    outerRadius={110}
                     fill="#8884d8"
                     dataKey="value"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {data?.business.industry.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-detail-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />
