@@ -51,6 +51,11 @@ export default function AnalyticsPage() {
   const [selectedGender, setSelectedGender] = useState<string>("all")
   const [districts, setDistricts] = useState<string[]>([])
 
+  const sankeyHeight = Math.max(
+    (data?.business.challengeSankey.nodes.length ?? 0) * 40,
+    400,
+  )
+
   useEffect(() => {
     fetchAnalyticsData()
   }, [selectedDistrict, selectedGender])
@@ -598,16 +603,22 @@ export default function AnalyticsPage() {
             <CardDescription>Links between groups and their challenges</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <Sankey
-                data={data?.business.challengeSankey}
-                nodeWidth={15}
-                nodePadding={40}
-                link={{ stroke: "#F59E0B" }}
-              >
-                <Tooltip />
-              </Sankey>
-            </ResponsiveContainer>
+            <div className="w-full overflow-y-auto" style={{ maxHeight: 400 }}>
+              <div style={{ width: "100%", height: sankeyHeight }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <Sankey
+                    data={data?.business.challengeSankey}
+                    nodeWidth={15}
+                    nodePadding={40}
+                    node={{ fill: "#10B981", stroke: "#065F46", strokeWidth: 1 }}
+                    link={{ stroke: "#3B82F6", strokeOpacity: 0.5 }}
+                    margin={{ top: 20, bottom: 20 }}
+                  >
+                    <Tooltip />
+                  </Sankey>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
