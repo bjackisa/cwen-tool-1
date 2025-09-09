@@ -6,6 +6,8 @@ import { normalize, toTitleCase } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import FollowupTab from "./followup-tab"
 import {
   ArrowLeft,
   Download,
@@ -60,8 +62,11 @@ export default function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all")
   const [selectedGender, setSelectedGender] = useState<string>("all")
+  const [selectedGroup, setSelectedGroup] = useState<string>("all")
   const [districts, setDistricts] = useState<string[]>([])
+  const [groups, setGroups] = useState<string[]>([])
   const [sankeyZoom, setSankeyZoom] = useState(1)
+  const [tab, setTab] = useState("baseline")
 
   const sankeyHeight = Math.max(
     (data?.business.challengeSankey.nodes.length ?? 0) * 40,
@@ -70,16 +75,29 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchAnalyticsData()
-  }, [selectedDistrict, selectedGender])
+  }, [selectedDistrict, selectedGender, selectedGroup])
 
   useEffect(() => {
-    const loadDistricts = async () => {
+    const loadFilters = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from("districts").select("name").order("name")
-      const names = Array.from(new Set((data || []).map((d) => toTitleCase(d.name)))).sort()
-      setDistricts(names)
+      const { data: d } = await supabase
+        .from("districts")
+        .select("name")
+        .order("name")
+      const { data: g } = await supabase
+        .from("groups")
+        .select("name")
+        .order("name")
+      const districtNames = Array.from(
+        new Set((d || []).map((dist) => toTitleCase(dist.name))),
+      ).sort()
+      const groupNames = Array.from(
+        new Set((g || []).map((gr) => toTitleCase(gr.name))),
+      ).sort()
+      setDistricts(districtNames)
+      setGroups(groupNames)
     }
-    loadDistricts()
+    loadFilters()
   }, [])
 
   const fetchAnalyticsData = async () => {
@@ -95,6 +113,10 @@ export default function AnalyticsPage() {
 
       if (selectedGender !== "all") {
         query = query.ilike("gender", normalize(selectedGender))
+      }
+
+      if (selectedGroup !== "all") {
+        query = query.ilike("group_name", normalize(selectedGroup))
       }
 
       const { data: respondents, error } = await query
@@ -405,55 +427,78 @@ export default function AnalyticsPage() {
       </header>
 
       <main className="max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Filter className="h-5 w-5 mr-2" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
-                <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select district" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Districts</SelectItem>
-                    {districts.map((d) => {
-                      const count = data?.geography.districts.find((dist) => dist.name === d)?.value || 0
-                      return (
-                        <SelectItem key={d} value={d}>
-                          {d} ({count})
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-                <Select value={selectedGender} onValueChange={setSelectedGender}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Genders</SelectItem>
-                    {data?.demographics.gender.map((gender) => (
-                      <SelectItem key={gender.name} value={gender.name}>
-                        {gender.name} ({gender.value})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="mb-8">
+            <TabsTrigger value="baseline">Baseline</TabsTrigger>
+            <TabsTrigger value="followup">Follow-up</TabsTrigger>
+          </TabsList>
 
+          {/* Filters */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Filter className="h-5 w-5 mr-2" />
+                Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
+                  <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select district" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Districts</SelectItem>
+                      {districts.map((d) => {
+                        const count = data?.geography.districts.find((dist) => dist.name === d)?.value || 0
+                        return (
+                          <SelectItem key={d} value={d}>
+                            {d} ({count})
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                  <Select value={selectedGender} onValueChange={setSelectedGender}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Genders</SelectItem>
+                      {data?.demographics.gender.map((gender) => (
+                        <SelectItem key={gender.name} value={gender.name}>
+                          {gender.name} ({gender.value})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Group</label>
+                  <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Groups</SelectItem>
+                      {groups.map((g) => (
+                        <SelectItem key={g} value={g}>
+                          {g}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <TabsContent value="baseline">
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <Card>
@@ -760,6 +805,15 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </div>
+        </TabsContent>
+        <TabsContent value="followup">
+          <FollowupTab
+            selectedDistrict={selectedDistrict}
+            selectedGender={selectedGender}
+            selectedGroup={selectedGroup}
+          />
+        </TabsContent>
+      </Tabs>
       </main>
     </div>
   )
