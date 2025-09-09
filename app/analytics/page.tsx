@@ -22,8 +22,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 interface AnalyticsData {
   totalRespondents: number
-  coffeeFarmers: number
-  teaFarmers: number
+  coffeeRespondents: number
+  teaRespondents: number
   demographics: {
     gender: { name: string; value: number }[]
     education: { name: string; value: number }[]
@@ -114,16 +114,12 @@ export default function AnalyticsPage() {
   const processAnalyticsData = (respondents: any[]): AnalyticsData => {
     const totalRespondents = respondents.length
 
-    const coffeeFarmers = respondents.filter(
-      (r) =>
-        r.value_chain_role?.toLowerCase().includes("farmer") &&
-        r.industry_involvement?.toLowerCase().includes("coffee"),
+    const coffeeRespondents = respondents.filter((r) =>
+      r.industry_involvement?.toLowerCase().includes("coffee"),
     ).length
 
-    const teaFarmers = respondents.filter(
-      (r) =>
-        r.value_chain_role?.toLowerCase().includes("farmer") &&
-        r.industry_involvement?.toLowerCase().includes("tea"),
+    const teaRespondents = respondents.filter((r) =>
+      r.industry_involvement?.toLowerCase().includes("tea"),
     ).length
 
     // Demographics
@@ -299,8 +295,8 @@ export default function AnalyticsPage() {
 
     return {
       totalRespondents,
-      coffeeFarmers,
-      teaFarmers,
+      coffeeRespondents,
+      teaRespondents,
       demographics: {
         gender: toChartData(genderCounts),
         education: toChartData(educationCounts),
@@ -336,8 +332,8 @@ export default function AnalyticsPage() {
     const csvContent = [
       ["Metric", "Category", "Value"],
       ["Total Respondents", "", data.totalRespondents.toString()],
-      ["Coffee Farmers", "", data.coffeeFarmers.toString()],
-      ["Tea Farmers", "", data.teaFarmers.toString()],
+      ["Coffee Respondents", "", data.coffeeRespondents.toString()],
+      ["Tea Respondents", "", data.teaRespondents.toString()],
       ...data.demographics.gender.map((item) => ["Gender", item.name, item.value.toString()]),
       ...data.demographics.education.map((item) => ["Education", item.name, item.value.toString()]),
       ...data.business.occupation.map((item) => ["Occupation", item.name, item.value.toString()]),
@@ -482,21 +478,21 @@ export default function AnalyticsPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Coffee Farmers</CardTitle>
+              <CardTitle className="text-sm font-medium">Coffee Respondents</CardTitle>
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data?.coffeeFarmers || 0}</div>
+              <div className="text-2xl font-bold">{data?.coffeeRespondents || 0}</div>
               <p className="text-xs text-muted-foreground">Coffee value chain</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tea Farmers</CardTitle>
+              <CardTitle className="text-sm font-medium">Tea Respondents</CardTitle>
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data?.teaFarmers || 0}</div>
+              <div className="text-2xl font-bold">{data?.teaRespondents || 0}</div>
               <p className="text-xs text-muted-foreground">Tea value chain</p>
             </CardContent>
           </Card>
