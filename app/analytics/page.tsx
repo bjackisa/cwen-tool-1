@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Download, Filter, Users, MapPin, Briefcase, TrendingUp } from "lucide-react"
 import Link from "next/link"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Sankey } from "recharts"
 
 interface AnalyticsData {
   totalRespondents: number
@@ -26,6 +26,10 @@ interface AnalyticsData {
     industrySummary: { name: string; value: number }[]
     valueChain: { name: string; value: number }[]
     challenges: { name: string; value: number }[]
+    challengeSankey: {
+      nodes: { name: string }[]
+      links: { source: number; target: number; value: number }[]
+    }
   }
   geography: {
     districts: { name: string; value: number }[]
@@ -177,15 +181,52 @@ export default function AnalyticsPage() {
       return acc
     }, {})
 
-    // Challenges (flatten arrays)
-    const challengeCounts = respondents.reduce((acc, r) => {
-      const challenges = r.business_challenges || []
-      challenges.forEach((challenge: string) => {
+    // Challenges and group links
+    const challengeCounts: Record<string, number> = {}
+    const groupChallengeCounts: Record<string, Record<string, number>> = {}
+
+    respondents.forEach((r) => {
+      const group = toTitleCase(r.group_name || "")
+      if (!group) return
+
+      const allChallenges = [
+        ...(r.business_challenges || []),
+        ...(r.financial_challenges || []),
+        ...(r.market_challenges || []),
+      ]
+
+      allChallenges.forEach((challenge: string) => {
+        if (!challenge) return
         const name = toTitleCase(challenge)
-        acc[name] = (acc[name] || 0) + 1
+        if (name === "Other") return
+
+        challengeCounts[name] = (challengeCounts[name] || 0) + 1
+
+        if (!groupChallengeCounts[group]) groupChallengeCounts[group] = {}
+        groupChallengeCounts[group][name] =
+          (groupChallengeCounts[group][name] || 0) + 1
       })
-      return acc
-    }, {})
+    })
+
+    const groups = Object.keys(groupChallengeCounts)
+    const challenges = Array.from(
+      new Set(
+        groups.flatMap((g) => Object.keys(groupChallengeCounts[g]))
+      ),
+    )
+
+    const nodes = [
+      ...groups.map((name) => ({ name })),
+      ...challenges.map((name) => ({ name })),
+    ]
+
+    const links = groups.flatMap((g, gi) =>
+      Object.entries(groupChallengeCounts[g]).map(([c, value]) => ({
+        source: gi,
+        target: groups.length + challenges.indexOf(c),
+        value,
+      })),
+    )
 
     // Geography
     const districtCounts = respondents.reduce((acc, r) => {
@@ -241,6 +282,10 @@ export default function AnalyticsPage() {
         industrySummary,
         valueChain: toChartData(valueChainCounts),
         challenges: toChartData(challengeCounts).slice(0, 10), // Top 10 challenges
+        challengeSankey: {
+          nodes,
+          links,
+        },
       },
       geography: {
         districts: toChartData(districtCounts),
@@ -551,17 +596,18 @@ export default function AnalyticsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Top Business Challenges</CardTitle>
-              <CardDescription>Most common challenges faced by respondents</CardDescription>
+              <CardDescription>Links between groups and their challenges</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data?.business.challenges} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={120} />
+                <Sankey
+                  data={data?.business.challengeSankey}
+                  nodeWidth={15}
+                  nodePadding={40}
+                  link={{ stroke: "#F59E0B" }}
+                >
                   <Tooltip />
-                  <Bar dataKey="value" fill="#F59E0B" />
-                </BarChart>
+                </Sankey>
               </ResponsiveContainer>
             </CardContent>
           </Card>
