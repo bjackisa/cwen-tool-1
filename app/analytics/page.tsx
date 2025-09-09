@@ -591,55 +591,54 @@ export default function AnalyticsPage() {
           </Card>
         </div>
 
-        {/* Challenges and Technology */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Business Challenges</CardTitle>
-              <CardDescription>Links between groups and their challenges</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <Sankey
-                  data={data?.business.challengeSankey}
-                  nodeWidth={15}
-                  nodePadding={40}
-                  link={{ stroke: "#F59E0B" }}
-                >
-                  <Tooltip />
-                </Sankey>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {/* Top Business Challenges */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Top Business Challenges</CardTitle>
+            <CardDescription>Links between groups and their challenges</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <Sankey
+                data={data?.business.challengeSankey}
+                nodeWidth={15}
+                nodePadding={40}
+                link={{ stroke: "#F59E0B" }}
+              >
+                <Tooltip />
+              </Sankey>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Technology Adoption</CardTitle>
-              <CardDescription>Technology usage among respondents</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={data?.technology.adoption}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {data?.technology.adoption.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Technology Adoption */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Technology Adoption</CardTitle>
+            <CardDescription>Technology usage among respondents</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={data?.technology.adoption}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {data?.technology.adoption.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
         {/* Geographic Distribution */}
         <Card className="mb-8">
