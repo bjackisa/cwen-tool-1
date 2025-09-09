@@ -34,7 +34,8 @@ interface AnalyticsData {
     occupation: { name: string; value: number }[]
     industry: { name: string; value: number }[]
     industrySummary: { name: string; value: number }[]
-    valueChain: { name: string; value: number }[]
+    valueChainStage: { name: string; value: number }[]
+    processingTeaStats: { count: number; percentage: number }
     challenges: { name: string; value: number }[]
     challengeSankey: {
       nodes: { name: string }[]
@@ -191,11 +192,25 @@ export default function AnalyticsPage() {
       industryDetailCounts[label] = (industryDetailCounts[label] || 0) + 1
     })
 
-    const valueChainCounts = respondents.reduce((acc, r) => {
-      const role = toTitleCase(r.value_chain_role || "Unknown")
-      acc[role] = (acc[role] || 0) + 1
+    const valueChainStageCounts = respondents.reduce((acc, r) => {
+      const stage = toTitleCase(r.value_chain_stage || "Unknown")
+      acc[stage] = (acc[stage] || 0) + 1
       return acc
     }, {})
+
+    const processingRespondents = respondents.filter(
+      (r) => (r.value_chain_stage || "").toLowerCase() === "processing",
+    )
+    const totalProcessing = processingRespondents.length
+    const teaProcessing = processingRespondents.filter((r) => {
+      const raw = r.industry_involvement?.toString().toLowerCase() || ""
+      return raw
+        .split(",")
+        .map((p: string) => p.trim())
+        .includes("tea")
+    }).length
+    const processingTeaPercentage =
+      totalProcessing > 0 ? (teaProcessing / totalProcessing) * 100 : 0
 
     // Challenges and group links
     const challengeCounts: Record<string, number> = {}
@@ -296,7 +311,8 @@ export default function AnalyticsPage() {
         occupation: toChartData(occupationCounts),
         industry,
         industrySummary,
-        valueChain: toChartData(valueChainCounts),
+        valueChainStage: toChartData(valueChainStageCounts),
+        processingTeaStats: { count: totalProcessing, percentage: processingTeaPercentage },
         challenges: toChartData(challengeCounts).slice(0, 10), // Top 10 challenges
         challengeSankey: {
           nodes,
@@ -593,12 +609,12 @@ export default function AnalyticsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Value Chain Roles</CardTitle>
+              <CardTitle>Value Chain Stage</CardTitle>
               <CardDescription>Distribution across value chain stages</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data?.business.valueChain}>
+                <BarChart data={data?.business.valueChainStage}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -606,6 +622,11 @@ export default function AnalyticsPage() {
                   <Bar dataKey="value" fill="#10B981" />
                 </BarChart>
               </ResponsiveContainer>
+              {data?.business.processingTeaStats && (
+                <p className="mt-4 text-xs text-muted-foreground">
+                  {`Please note ${data.business.processingTeaStats.percentage.toFixed(2)}% of ${data.business.processingTeaStats.count} Processing respondents, are doing it at a Casual labor basis under other employees and not at an Entrepreneurship level.`}
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
