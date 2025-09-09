@@ -624,8 +624,9 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
               {data?.business.processingTeaStats && (
                 <p className="mt-4 text-xs text-muted-foreground">
-                  {`Please note ${data.business.processingTeaStats.percentage.toFixed(2)}% of ${data.business.processingTeaStats.count} Processing respondents, are doing it at a Casual labor basis under other employees and not at an Entrepreneurship level.`}
+                  {`Note: ${data.business.processingTeaStats.percentage.toFixed(2)}% of the ${data.business.processingTeaStats.count} processing respondents are engaged as casual labor under other employers, rather than operating at an entrepreneurial level.`}
                 </p>
+
               )}
             </CardContent>
           </Card>
