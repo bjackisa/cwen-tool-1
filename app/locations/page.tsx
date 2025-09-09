@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { normalize, toTitleCase } from "@/lib/utils"
 
 interface Location { id: string; district_id: string | null; sub_county: string; parish: string }
 interface District { id: string; name: string }
@@ -19,20 +20,39 @@ export default function LocationsPage() {
   const load = async () => {
     const { data: locs } = await supabase.from("locations").select("*").order("sub_county")
     const { data: dists } = await supabase.from("districts").select("*").order("name")
-    setLocations((locs || []) as Location[])
-    setDistricts((dists || []) as District[])
+    setLocations(
+      (locs || []).map((l) => ({
+        ...l,
+        sub_county: toTitleCase(l.sub_county),
+        parish: toTitleCase(l.parish),
+      })),
+    )
+    setDistricts((dists || []).map((d) => ({ ...d, name: toTitleCase(d.name) })))
   }
 
   useEffect(() => { load() }, [])
 
   const add = async () => {
-    const { error } = await supabase.from("locations").insert({ district_id: form.district || null, sub_county: form.sub_county, parish: form.parish })
+    const sub = toTitleCase(form.sub_county)
+    const par = toTitleCase(form.parish)
+    const { error } = await supabase
+      .from("locations")
+      .insert({ district_id: form.district || null, sub_county: normalize(sub), parish: normalize(par) })
     if (error) setError(error.message)
-    else { setForm({ district: "", sub_county: "", parish: "" }); load() }
+    else {
+      setForm({ district: "", sub_county: "", parish: "" })
+      load()
+    }
   }
 
   const update = async (loc: Location) => {
-    const { error } = await supabase.from("locations").update({ district_id: loc.district_id, sub_county: loc.sub_county, parish: loc.parish }).eq("id", loc.id)
+    const sub = toTitleCase(loc.sub_county)
+    const par = toTitleCase(loc.parish)
+    setLocations((prev) => prev.map((l) => (l.id === loc.id ? { ...l, sub_county: sub, parish: par, district_id: loc.district_id } : l)))
+    const { error } = await supabase
+      .from("locations")
+      .update({ district_id: loc.district_id, sub_county: normalize(sub), parish: normalize(par) })
+      .eq("id", loc.id)
     if (error) setError(error.message)
   }
 
@@ -56,8 +76,16 @@ export default function LocationsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Input value={form.sub_county} onChange={(e) => setForm({ ...form, sub_county: e.target.value })} placeholder="Sub county" />
-        <Input value={form.parish} onChange={(e) => setForm({ ...form, parish: e.target.value })} placeholder="Parish" />
+        <Input
+          value={form.sub_county}
+          onChange={(e) => setForm({ ...form, sub_county: toTitleCase(e.target.value) })}
+          placeholder="Sub county"
+        />
+        <Input
+          value={form.parish}
+          onChange={(e) => setForm({ ...form, parish: toTitleCase(e.target.value) })}
+          placeholder="Parish"
+        />
         <Button onClick={add} disabled={!form.sub_county || !form.parish}>Add</Button>
       </div>
       <ul className="space-y-2">
@@ -71,8 +99,20 @@ export default function LocationsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Input value={loc.sub_county} onChange={(e) => { loc.sub_county = e.target.value; update(loc) }} />
-            <Input value={loc.parish} onChange={(e) => { loc.parish = e.target.value; update(loc) }} />
+            <Input
+              value={loc.sub_county}
+              onChange={(e) => {
+                loc.sub_county = toTitleCase(e.target.value)
+                update(loc)
+              }}
+            />
+            <Input
+              value={loc.parish}
+              onChange={(e) => {
+                loc.parish = toTitleCase(e.target.value)
+                update(loc)
+              }}
+            />
             <Button variant="destructive" onClick={() => remove(loc.id)}>Delete</Button>
           </li>
         ))}

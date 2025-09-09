@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { normalize, toTitleCase } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -53,7 +54,8 @@ export default function AnalyticsPage() {
     const loadDistricts = async () => {
       const supabase = createClient()
       const { data } = await supabase.from("districts").select("name").order("name")
-      setDistricts((data || []).map((d) => d.name))
+      const names = Array.from(new Set((data || []).map((d) => toTitleCase(d.name)))).sort()
+      setDistricts(names)
     }
     loadDistricts()
   }, [])
@@ -66,11 +68,11 @@ export default function AnalyticsPage() {
       let query = supabase.from("survey_respondents").select("*")
 
       if (selectedDistrict !== "all") {
-        query = query.eq("district", selectedDistrict)
+        query = query.ilike("district", normalize(selectedDistrict))
       }
 
       if (selectedGender !== "all") {
-        query = query.eq("gender", selectedGender)
+        query = query.ilike("gender", normalize(selectedGender))
       }
 
       const { data: respondents, error } = await query
@@ -104,13 +106,13 @@ export default function AnalyticsPage() {
 
     // Demographics
     const genderCounts = respondents.reduce((acc, r) => {
-      const gender = r.gender || "Unknown"
+      const gender = toTitleCase(r.gender || "Unknown")
       acc[gender] = (acc[gender] || 0) + 1
       return acc
     }, {})
 
     const educationCounts = respondents.reduce((acc, r) => {
-      const education = r.education_level || "Unknown"
+      const education = toTitleCase(r.education_level || "Unknown")
       acc[education] = (acc[education] || 0) + 1
       return acc
     }, {})
@@ -130,26 +132,26 @@ export default function AnalyticsPage() {
     }, {})
 
     const maritalCounts = respondents.reduce((acc, r) => {
-      const status = r.marital_status || "Unknown"
+      const status = toTitleCase(r.marital_status || "Unknown")
       acc[status] = (acc[status] || 0) + 1
       return acc
     }, {})
 
     // Business
     const occupationCounts = respondents.reduce((acc, r) => {
-      const occupation = r.occupation || "Unknown"
+      const occupation = toTitleCase(r.occupation || "Unknown")
       acc[occupation] = (acc[occupation] || 0) + 1
       return acc
     }, {})
 
     const industryCounts = respondents.reduce((acc, r) => {
-      const industry = r.industry_involvement || "Unknown"
+      const industry = toTitleCase(r.industry_involvement || "Unknown")
       acc[industry] = (acc[industry] || 0) + 1
       return acc
     }, {})
 
     const valueChainCounts = respondents.reduce((acc, r) => {
-      const role = r.value_chain_role || "Unknown"
+      const role = toTitleCase(r.value_chain_role || "Unknown")
       acc[role] = (acc[role] || 0) + 1
       return acc
     }, {})
@@ -158,20 +160,21 @@ export default function AnalyticsPage() {
     const challengeCounts = respondents.reduce((acc, r) => {
       const challenges = r.business_challenges || []
       challenges.forEach((challenge: string) => {
-        acc[challenge] = (acc[challenge] || 0) + 1
+        const name = toTitleCase(challenge)
+        acc[name] = (acc[name] || 0) + 1
       })
       return acc
     }, {})
 
     // Geography
     const districtCounts = respondents.reduce((acc, r) => {
-      const district = r.district || "Unknown"
+      const district = toTitleCase(r.district || "Unknown")
       acc[district] = (acc[district] || 0) + 1
       return acc
     }, {})
 
     const subCountyCounts = respondents.reduce((acc, r) => {
-      const subCounty = r.sub_county || "Unknown"
+      const subCounty = toTitleCase(r.sub_county || "Unknown")
       acc[subCounty] = (acc[subCounty] || 0) + 1
       return acc
     }, {})
@@ -186,7 +189,8 @@ export default function AnalyticsPage() {
     const technologyBarriers = respondents.reduce((acc, r) => {
       const barriers = r.technology_barriers || []
       barriers.forEach((barrier: string) => {
-        acc[barrier] = (acc[barrier] || 0) + 1
+        const name = toTitleCase(barrier)
+        acc[name] = (acc[name] || 0) + 1
       })
       return acc
     }, {})

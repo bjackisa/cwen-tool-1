@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { normalize, toTitleCase } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -61,9 +62,22 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
         ])
 
         if (resp.error) throw resp.error
-        setRespondent(resp.data)
-        setFormData(resp.data)
-        setIndustries((inds.data || []) as Industry[])
+        const respondentData = {
+          ...resp.data,
+          district: toTitleCase(resp.data.district),
+          sub_county: toTitleCase(resp.data.sub_county),
+          parish: toTitleCase(resp.data.parish),
+          gender: toTitleCase(resp.data.gender),
+          education_level: toTitleCase(resp.data.education_level),
+          occupation: toTitleCase(resp.data.occupation),
+          industry_involvement: toTitleCase(resp.data.industry_involvement),
+          value_chain_role: toTitleCase(resp.data.value_chain_role),
+          respondent_name: toTitleCase(resp.data.respondent_name),
+          group_name: toTitleCase(resp.data.group_name),
+        }
+        setRespondent(respondentData)
+        setFormData(respondentData)
+        setIndustries((inds.data || []).map((i: any) => ({ ...i, name: toTitleCase(i.name) })) as Industry[])
         setSelectedIndustries((links.data || []).map((l: any) => l.industry_id))
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred")
@@ -86,22 +100,22 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
       .map((id) => industries.find((i) => i.id === id)?.name)
       .filter(Boolean)
       .join(", ")
-    const { error } = await supabase
-      .from("survey_respondents")
-      .update({
-        district: formData.district,
-        sub_county: formData.sub_county,
-        parish: formData.parish,
-        age: formData.age,
-        gender: formData.gender,
-        education_level: formData.education_level,
-        occupation: formData.occupation,
-        industry_involvement: names,
-        value_chain_role: formData.value_chain_role,
-        respondent_name: formData.respondent_name,
-        group_name: formData.group_name,
-      })
-      .eq("id", id)
+      const { error } = await supabase
+        .from("survey_respondents")
+        .update({
+          district: normalize(toTitleCase(formData.district)),
+          sub_county: normalize(toTitleCase(formData.sub_county)),
+          parish: normalize(toTitleCase(formData.parish)),
+          age: formData.age,
+          gender: normalize(toTitleCase(formData.gender)),
+          education_level: normalize(toTitleCase(formData.education_level)),
+          occupation: normalize(toTitleCase(formData.occupation)),
+          industry_involvement: normalize(names),
+          value_chain_role: normalize(toTitleCase(formData.value_chain_role)),
+          respondent_name: normalize(toTitleCase(formData.respondent_name)),
+          group_name: normalize(toTitleCase(formData.group_name)),
+        })
+        .eq("id", id)
 
     if (error) {
       setError(error.message)
@@ -114,7 +128,7 @@ export default function RespondentDetailPage({ params }: { params: { id: string 
       await supabase.from("respondent_industries").insert(rows)
     }
 
-    setRespondent({ ...formData, industry_involvement: names })
+      setRespondent({ ...formData, industry_involvement: toTitleCase(names) })
     setIsEditing(false)
   }
 

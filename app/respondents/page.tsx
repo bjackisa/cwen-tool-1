@@ -55,15 +55,15 @@ export default function RespondentsPage() {
           r.parish?.toLowerCase().includes(term),
       )
     }
-    if (district) {
-      data = data.filter((r) => r.district === district)
-    }
-    if (gender) {
-      data = data.filter((r) => r.gender === gender)
-    }
-    if (industry) {
-      data = data.filter((r) => r.industry_involvement === industry)
-    }
+      if (district) {
+        data = data.filter((r) => normalize(r.district) === normalize(district))
+      }
+      if (gender) {
+        data = data.filter((r) => normalize(r.gender) === normalize(gender))
+      }
+      if (industry) {
+        data = data.filter((r) => normalize(r.industry_involvement) === normalize(industry))
+      }
     setFiltered(data)
   }, [respondents, search, district, gender, industry])
 
@@ -76,9 +76,24 @@ export default function RespondentsPage() {
         supabase.from("industries").select("name").order("name"),
       ])
       if (resp.error) throw resp.error
-      setRespondents(resp.data || [])
-      setDistricts((dist.data || []).map((d) => d.name))
-      setIndustries((inds.data || []).map((i) => i.name))
+      setRespondents(
+        (resp.data || []).map((r) => ({
+          ...r,
+          district: toTitleCase(r.district),
+          sub_county: toTitleCase(r.sub_county),
+          parish: toTitleCase(r.parish),
+          age: r.age,
+          gender: toTitleCase(r.gender),
+          education_level: toTitleCase(r.education_level),
+          occupation: toTitleCase(r.occupation),
+          industry_involvement: toTitleCase(r.industry_involvement),
+          value_chain_role: toTitleCase(r.value_chain_role),
+          respondent_name: toTitleCase(r.respondent_name),
+          group_name: toTitleCase(r.group_name),
+        })),
+      )
+      setDistricts((dist.data || []).map((d) => toTitleCase(d.name)))
+      setIndustries((inds.data || []).map((i) => toTitleCase(i.name)))
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -98,7 +113,11 @@ export default function RespondentsPage() {
     }
   }
 
-  const genders = Array.from(new Set(respondents.map((r) => r.gender).filter(Boolean))).sort()
+  const genders = Array.from(
+    new Set(respondents.map((r) => normalize(r.gender)).filter(Boolean)),
+  )
+    .map((g) => toTitleCase(g))
+    .sort()
 
   if (isLoading) {
     return (
