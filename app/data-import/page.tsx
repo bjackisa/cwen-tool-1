@@ -101,16 +101,12 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
 
   const uniqueGenders = [...new Set(respondents.map((r) => r.gender).filter(Boolean))].sort()
 
-  const coffeeFarmersCount = respondents.filter(
-    (r) =>
-      r.value_chain_role?.toLowerCase().includes("farmer") &&
-      r.industry_involvement?.toLowerCase().includes("coffee"),
+  const coffeeRespondentsCount = respondents.filter((r) =>
+    r.industry_involvement?.toLowerCase().includes("coffee"),
   ).length
 
-  const teaFarmersCount = respondents.filter(
-    (r) =>
-      r.value_chain_role?.toLowerCase().includes("farmer") &&
-      r.industry_involvement?.toLowerCase().includes("tea"),
+  const teaRespondentsCount = respondents.filter((r) =>
+    r.industry_involvement?.toLowerCase().includes("tea"),
   ).length
 
   const exportData = () => {
@@ -249,8 +245,8 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
                   <span className="text-purple-600 font-bold">☕</span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Coffee Farmers</p>
-                  <p className="text-2xl font-bold text-gray-900">{coffeeFarmersCount}</p>
+                  <p className="text-sm font-medium text-gray-600">Coffee Respondents</p>
+                  <p className="text-2xl font-bold text-gray-900">{coffeeRespondentsCount}</p>
                 </div>
               </div>
             </CardContent>
@@ -263,8 +259,8 @@ export default function DataImportPage({ embedded = false }: { embedded?: boolea
                   <span className="text-orange-600 font-bold">🍃</span>
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Tea Farmers</p>
-                  <p className="text-2xl font-bold text-gray-900">{teaFarmersCount}</p>
+                  <p className="text-sm font-medium text-gray-600">Tea Respondents</p>
+                  <p className="text-2xl font-bold text-gray-900">{teaRespondentsCount}</p>
                 </div>
               </div>
             </CardContent>
